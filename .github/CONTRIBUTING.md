@@ -1,15 +1,40 @@
 # Contribution Guidelines / Guías de Contribución
 
-🇬🇧 [English Version](#english)   |   🇪🇸 [Versión en Español](#español)
+[🇬🇧 English](#english)  |  [🇪🇸 Español](#español)
+
+---
+
+## Quick start
+
+- **Install hooks:** run `make hook` after cloning. This installs the repository git hooks and enables automatic checks on `git commit`.
+- To skip hooks for a single commit use `git commit --no-verify`.
+
+## Inicio rapido
+
+- **Instalar hooks:** ejecuta `make hook` tras clonar. Instala los git hooks del repositorio y activa verificaciones automaticas para `git commit`.
+- Para saltar los hooks en un unico commit `git commit --no-verify`.
 
 ---
 
 <a name="english"></a>
 ## 🇬🇧 English
 
-To keep our change history clean and readable, we follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+### Git hooks
 
-### Full Commit Message Format
+Run:
+
+```sh
+make hook
+```
+
+This installs the repository pre-commit hooks into `.git/hooks/` and ensures checks run automatically on commits.
+
+### Commit messages (Conventional Commits)
+
+To maintain a clear commit history, follow the Conventional Commits specification: https://www.conventionalcommits.org/
+
+Format:
+
 ```text
 <type>(<optional-scope>): <short description>
 
@@ -18,37 +43,39 @@ To keep our change history clean and readable, we follow the [Conventional Commi
 [optional footer]
 ```
 
-### When to use Body and Footer?
-* **Body**: Use it to explain **why** you made the change and provide technical context. Separate it from the description with a blank line.
-* **Footer**: Use it to reference tracking IDs, such as closing GitHub issues.
+- **Body:** explain *why* the change was made and provide technical context.
+- **Footer:** reference tracking IDs (issues, task numbers), e.g. `Closes #123`.
 
-### Allowed Types
-* **feat**: A new feature or functionality.
-* **fix**: A bug fix.
-* **docs**: Changes to documentation only.V
-* **style**: Code formatting (spaces, semicolons) without logic changes.
-* **refactor**: Code changes that neither fix a bug nor add a feature.
-* **test**: Adding or modifying tests.
-* **chore**: Updating dependencies, build tools, or configuration.
+Allowed types:
 
-### Golden Rules
-1. **Use imperative**: Write `feat: add feature` instead of `added` or `adds`.
-2. **Lowercase**: Do not capitalize the first letter of the short description.
-3. **No period**: Do not end the short description with a dot `.`.
+- **feat:** new feature
+- **fix:** bug fix
+- **docs:** documentation only
+- **style:** formatting, no logic changes
+- **refactor:** code change that neither fixes a bug nor adds a feature
+- **test:** tests added or modified
+- **chore:** build, tooling, or dependency changes
 
-### Examples
+Golden rules:
 
-**Simple Commit:**
+1. Use the imperative, NO past tense: `fix: handle nil pointer`
+2. Keep the short description lowercase
+3. Don’t end the short description with a period
+
+Examples:
+
+Simple:
+
 ```text
 feat(auth): add password reset flow
 ```
 
-**Full Commit (with Body and Footer):**
+Full (with body and footer):
+
 ```text
 fix(api): resolve memory leak during user fetching
 
-The previous implementation kept a DB connection open after every request. 
-Switched to a scoped connection pool to ensure proper release.
+The previous implementation kept a DB connection open after every request. Switched to a scoped connection pool to ensure proper release.
 
 Closes #142
 ```
@@ -58,48 +85,63 @@ Closes #142
 <a name="español"></a>
 ## 🇪🇸 Español
 
-Para mantener el historial de cambios limpio y legible, adoptamos la especificación de [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/).
+### Hooks de Git
 
-### Estructura Completa del Mensaje
+Ejecuta:
+
+```sh
+make hook
+```
+
+Esto instala los hooks pre-commit en `.git/hooks/` y asegura que verificaciones se ejecuten automáticamente al hacer commits.
+
+### Mensajes de commit (Conventional Commits)
+
+Para mantener un historial de commits claro y limpio, usa la especificación Conventional Commits: https://www.conventionalcommits.org/es/
+
+Formato:
+
 ```text
 <tipo>(<alcance opcional>): <descripción corta>
 
-[cuerpo del mensaje opcional]
+[cuerpo opcional]
 
 [pie de página opcional]
 ```
 
-### ¿Cuándo usar el Cuerpo y el Pie de Página?
-* **Cuerpo (Body)**: Úsalo para explicar **por qué** hiciste el cambio y dar contexto técnico. Sepáralo de la descripción con una línea en blanco.
-* **Pie de página (Footer)**: Úsalo para referenciar IDs de seguimiento, como cerrar *issues* de GitHub.
+- **Cuerpo:** explica *por qué* se hizo el cambio y aporta contexto técnico.
+- **Pie de página:** referencia IDs de seguimiento (issues), por ejemplo `Closes #123`.
 
-### Tipos Permitidos
-* **feat**: Nueva característica o funcionalidad.
-* **fix**: Corrección de un error (bug).
-* **docs**: Cambios solo en la documentación.
-* **style**: Formato de código (espacios, puntos y coma) sin cambios de lógica.
-* **refactor**: Cambios en el código que no añaden funciones ni corrigen errores.
-* **test**: Añadir o modificar pruebas.
-* **chore**: Actualización de dependencias, herramientas de desarrollo o configuración.
+Tipos permitidos:
 
-### Reglas de Oro
-1. **Usa el imperativo**: Escribe `feat: add feature` en lugar de `added` o `adds`.
-2. **Minúsculas**: La descripción corta no debe iniciar con mayúscula.
-3. **Sin punto**: No pongas punto final `.` al terminar la descripción corta.
+- **feat:** nueva funcionalidad
+- **fix:** corrección de bug
+- **docs:** documentación solamente
+- **style:** formato, sin cambios de lógica
+- **refactor:** cambio de código que no añade función ni corrige bug
+- **test:** pruebas añadidas o modificadas
+- **chore:** cambios de build, herramientas o dependencias
 
-### Ejemplos
+Reglas de oro:
 
-**Commit Simple:**
+1. Usa imperativo, NO el tiempo pasado: `fix: handle nil pointer`
+2. Mantén la descripción corta en minúsculas
+3. No pongas punto final en la descripción corta
+
+Ejemplos:
+
+Simple:
+
 ```text
 feat(auth): add password reset flow
 ```
 
-**Commit Completo (con Cuerpo y Pie de página):**
+Completo (con cuerpo y pie de página):
+
 ```text
 fix(api): resolve memory leak during user fetching
 
-The previous implementation kept a DB connection open after every request. 
-Switched to a scoped connection pool to ensure proper release.
+La implementación anterior mantenía una conexión a la BD abierta después de cada petición. Se cambió a un pool con alcance para asegurar la liberación correcta.
 
 Closes #142
 ```
