@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -u
+
+# Only executed for main and master branches
+BRANCH=$(git branch --show-current)
+if [[ "$BRANCH" != "main" && "$BRANCH" != "master" ]]; then
+  exit 0
+fi
+
+# Number of failed steps
+FAILED=0
+TOTAL=0
+FAILED_STEPS=()
+
+# Eecutes each command
+# "shift" shifts to the left the positional arguments ($1, $2, etc) so first is lost
+run_step() {
+  local name=$1; shift
+  TOTAL=$((TOTAL + 1))
+  echo "=============================="
+  echo "Running check: $name"
+  echo "------------------------------"
+
+  local output
+  local status
+  output=$("$@" 2>&1)
+  status=$?
+
+  if [ $status -eq 0 ]; then
+    echo "[PASS] $name"
+  else
+    echo "[FAIL] $name"
+    echo "$output"
+    FAILED=$((FAILED + 1))
+    FAILED_STEPS+=("$name")
+  fi
+}
+
+# Run ASAN smoke test through make asan
+# Tests to execute
+run_step "Fclean" make --silent --no-print-directory fclean
+run_step "Build"      make --silent --no-print-directory
+run_step "Rebuild"   make --silent --no-print-directory re
+run_step "Run with Sanitizer" make --silent --no-print-directory asan
+
+# Results
+echo "=============================="
+if [ $FAILED -gt 0 ]; then
+  echo "[ERROR] PRE-COMMIT HOOK FAILED on branch $BRANCH"
+  echo "Summary: $FAILED of $TOTAL check(s) failed."
+  echo "Failed checks: ${FAILED_STEPS[*]}"
+  echo "Commit aborted."
+  exit 1
+fi
+
+echo "[OK] PRE-COMMIT HOOK PASSED on branch $BRANCH"
+echo "Summary: all $TOTAL check(s) passed."

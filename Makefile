@@ -6,13 +6,13 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/04/27 22:36:40 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/06/10 20:09:54 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/06/10 22:59:38 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
+CXX ?= c++
+CXXFLAGS ?= -Wall -Wextra -Werror -std=c++98 -pedantic
 RM = rm -f
 
 INCLUDES = -Iinclude
@@ -53,8 +53,12 @@ run: all
 
 re: fclean all
 
+asan:
+	bash scripts/asan-test.sh
+
 hooks:
 	git config core.hooksPath .githooks
 	chmod +x .githooks/commit-msg 2>/dev/null || true
+	chmod +x .githooks/pre-commit 2>/dev/null || true
 
-.PHONY: all clean fclean re run hooks
+.PHONY: all clean fclean re run hooks asan

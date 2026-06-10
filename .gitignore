@@ -8,5 +8,8 @@ webserv
 obj/
 bin/
 
+# Logs
+.logs/
+
 # Editor files
 .vscode/
