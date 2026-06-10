@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/04/27 22:36:40 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/06/10 18:17:44 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/06/10 20:09:54 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,4 +53,8 @@ run: all
 
 re: fclean all
 
-.PHONY: all clean fclean re run
+hooks:
+	git config core.hooksPath .githooks
+	chmod +x .githooks/commit-msg 2>/dev/null || true
+
+.PHONY: all clean fclean re run hooks

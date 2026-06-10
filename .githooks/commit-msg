@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Get the temp commit message
+commit_msg=$(cat "$1")
+
+# Regex patter for validation
+pattern="^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\([a-z0-9_-]+\))?!?: .+"
+
+if ! echo "$commit_msg" | grep -Eq "$pattern"; then
+    echo "[ERROR] Invalid commit message format."
+    echo "Your message: \"$commit_msg\""
+    echo "Correct format: type(scope): message (e.g., 'feat(auth): add login')"
+    exit 1
+fi
+
+# grep -E Activates regular expressions mode so no escape character needed
+# grep -q Quiet mode, match is not printed
