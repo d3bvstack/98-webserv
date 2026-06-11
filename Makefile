@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/04/27 22:36:40 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/06/10 22:59:38 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/06/11 23:51:36 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,8 @@ INCLUDES = -Iinclude
 
 OBJDIR = obj
 
-SRCS =	src/main.cpp
+SRCS =	src/main.cpp \
+		src/Server.cpp
 
 OBJS = $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 OBJDIRS = $(sort $(dir $(OBJS)))

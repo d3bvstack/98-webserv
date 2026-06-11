@@ -6,19 +6,25 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/11 15:35:20 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/12 00:15:53 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <cstdlib>
 #include <csignal>
 #include <string>
+#include <sstream>
 
-volatile sig_atomic_t keep_running = 1;
+#include "Server.hpp"
 
-void stop(int)
+
+volatile sig_atomic_t keepRunning = 1;
+volatile sig_atomic_t receivedSignal = 0;
+
+void stop(int signal)
 {
-    keep_running = 0;
+    keepRunning = 0;
+    receivedSignal = signal;
 }
 
 int main(int argc, char** argv)
@@ -27,11 +33,42 @@ int main(int argc, char** argv)
     std::signal(SIGQUIT, stop);
     std::signal(SIGTERM, stop);
 
-    (void)argc;
-    (void)argv;
-    while (keep_running)
+    Server* webserv = NULL;
+
+    try
     {
-        ;
+        if (argc != 1)
+            webserv = new Server(argc, argv); // Use arguments as config files
+        else
+            webserv = new Server; // Use default config directory
+
+        webserv->debugServer();
+    
+        while (keepRunning)
+        {
+            ;
+        }
+        
+        delete webserv;
+        webserv = NULL;
+
+        if (receivedSignal != 0)
+        {
+            std::stringstream ss;
+            ss << receivedSignal;
+            std::cout << "[SIGNAL] A signal was detected and terminated the execution, SIGNAL =" << ss.str() << std::endl;
+        }
     }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        if (webserv != NULL)
+        {
+            delete webserv;
+            webserv = NULL;
+        }
+        return (EXIT_FAILURE);
+    }
+    
     return (EXIT_SUCCESS);
 }
