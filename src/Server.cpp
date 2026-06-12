@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/12 10:50:23 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/12 10:57:54 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,12 +52,15 @@ Server::Server()
         {
             std::string fullpath = std::string(DEFAULT_CONFIG_DIR) + "/" + filename;
             _configurationFiles.push_back(fullpath);
+            std::cerr << "[INFO] " << fullpath << " was correctly added as a configuration file.";
         }
     }
     closedir(dirStream);
 
     if (_configurationFiles.empty())
         throw std::runtime_error("[ERROR] No valid configuration files where provided.");
+
+    std::cerr << "[INFO] Server object created successfully.";
 }
 
 
@@ -74,12 +77,15 @@ Server::Server(int argc, char **argv)
         if (matchExtension(argv[i], ".conf"))
         {
             _configurationFiles.push_back(argv[i]);
+            std::cerr << "[INFO] " << argv[i] << " was correctly added as a configuration file.";
         }
         else
             std::cerr << "[WARNING] " << argv[i] << " is not a .conf file and will be skipped.";
     }
     if (_configurationFiles.empty())
         throw std::runtime_error("[ERROR] No valid configuration files where provided.");
+
+    std::cerr << "[INFO] Server object created successfully.";
 }
 
 /**
