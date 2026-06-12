@@ -12,4 +12,5 @@ bin/
 .logs/
 
 # Editor files
-.vscode/
+.vscode/*
+!.vscode/tasks.json
