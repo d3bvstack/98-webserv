@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "Vhost.hpp"
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -24,12 +26,16 @@
 class Server
 {
     private:
-        std::vector<std::string> _configurationFiles;
+        std::vector<std::string>    _configurationFiles;
+        std::vector<Vhost>          _vhosts;
     
     public:
         Server();
         Server(int argc, char **argv);
 
-        const std::vector<std::string>& getConfigurationFiles() const { return (_configurationFiles); };
-        void debugServer();
+        const std::vector<std::string>& getConfigurationFiles() const   { return (_configurationFiles); };
+        const std::vector<Vhost>&       getVhosts() const               { return (_vhosts); };
+
+        void setVhosts(const std::vector<Vhost>& vhosts) { _vhosts = vhosts; }
+        void debugServer() const;
 };

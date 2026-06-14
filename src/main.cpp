@@ -33,24 +33,24 @@ int main(int argc, char** argv)
     std::signal(SIGQUIT, stop);
     std::signal(SIGTERM, stop);
 
-    Server* webserv = NULL;
+    Server* webserver = NULL;
 
     try
     {
         if (argc != 1)
-            webserv = new Server(argc, argv); // Use arguments as config files
+            webserver = new Server(argc, argv); // Use arguments as config files
         else
-            webserv = new Server; // Use default config directory
+            webserver = new Server; // Use default config directory
 
-        webserv->debugServer();
+        webserver->debugServer();
     
         while (keepRunning)
         {
-            ;
+            usleep(100000);
         }
         
-        delete webserv;
-        webserv = NULL;
+        delete webserver;
+        webserver = NULL;
 
         if (receivedSignal != 0)
         {
@@ -62,10 +62,10 @@ int main(int argc, char** argv)
     catch(const std::exception& e)
     {
         std::cerr << e.what() << std::endl;
-        if (webserv != NULL)
+        if (webserver != NULL)
         {
-            delete webserv;
-            webserv = NULL;
+            delete webserver;
+            webserver = NULL;
         }
         return (EXIT_FAILURE);
     }

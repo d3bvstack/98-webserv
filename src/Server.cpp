@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/12 22:29:33 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/13 00:26:16 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,9 +92,11 @@ Server::Server(int argc, char **argv)
  * @brief Prints the Server object members for debugging
  *
  */
-void Server::debugServer()
+void Server::debugServer() const
 {
     int i = 0;
-    for (std::vector<std::string>::iterator it = _configurationFiles.begin(); it != _configurationFiles.end(); ++it, ++i)
+    for (std::vector<std::string>::const_iterator it = _configurationFiles.begin(); it != _configurationFiles.end(); ++it, ++i)
         std::cerr << "[DEBUG][SERVER] Configuration file " << i << ": " + *it << std::endl;
+    for (std::vector<Vhost>::const_iterator it = _vhosts.begin(); it != _vhosts.end(); ++it, ++i)
+        it->debugVhost();
 }
