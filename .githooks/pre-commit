@@ -7,41 +7,84 @@ if [[ "$BRANCH" != "main" && "$BRANCH" != "master" ]]; then
   exit 0
 fi
 
+# Find the repository root absolute path
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Ensure log directory exists
+LOG_DIR="$REPO_ROOT/.githooks/logs"
+mkdir -p "$LOG_DIR"
+
+# Generate a unique log filename with timestamp
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_FILE="$LOG_DIR/pre-commit_${BRANCH}_${TIMESTAMP}.log"
+
+# Redirect stdout and stderr to both terminal and log file
+exec > >(tee -i "$LOG_FILE") 2>&1
+
+echo "Pre-commit hook, logs at: $LOG_FILE"
+
+# Path for testing sandbox
+TARGET_DIR="test-worktree-sandbox"
+
+# Clean up any previous testing remains
+git worktree prune &>/dev/null
+rm -rf "$TARGET_DIR"
+
+# Create worktree based on current HEAD commit on a separate directory
+echo "Creating isolated test environment..."
+(unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE; git worktree add --detach "$TARGET_DIR" HEAD)
+
+# Check out staged changes into the temp directory
+# Ensures tests run on (last commit + staged changes)
+git checkout-index --all --prefix="$TARGET_DIR/" --force
+
+
+# Delete testing directory on script exit
+cleanup() {
+    echo "Cleaning up test environment..."
+    # Change back to the original directory so the sandbox isn't busy
+    cd - &>/dev/null
+    
+    git worktree remove --force "$TARGET_DIR" &>/dev/null
+    rm -rf "$TARGET_DIR"
+}
+trap cleanup EXIT
+
+# Clear Git env vars
+unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE
+# Change directory to testing directory
+cd "$TARGET_DIR"
+
 # Number of failed steps
 FAILED=0
 TOTAL=0
 FAILED_STEPS=()
 
-# Eecutes each command
-# "shift" shifts to the left the positional arguments ($1, $2, etc) so first is lost
+# Executes each command
 run_step() {
   local name=$1; shift
   TOTAL=$((TOTAL + 1))
   echo "=============================="
   echo "Running check: $name"
   echo "------------------------------"
-
-  local output
-  local status
-  output=$("$@" 2>&1)
-  status=$?
-
+  
+  "$@"
+  local status=$?
+  
   if [ $status -eq 0 ]; then
     echo "[PASS] $name"
   else
     echo "[FAIL] $name"
-    echo "$output"
     FAILED=$((FAILED + 1))
     FAILED_STEPS+=("$name")
   fi
 }
 
-# Run ASAN smoke test through make asan
-# Tests to execute
-run_step "Fclean" make --silent --no-print-directory fclean
-run_step "Build"      make --silent --no-print-directory
-run_step "Rebuild"   make --silent --no-print-directory re
-run_step "Run with Sanitizer" make --silent --no-print-directory asan
+# Run asan smoke test through make asan
+run_step "fclean" make --silent --no-print-directory fclean
+run_step "build" make --silent --no-print-directory
+run_step "rebuild" make --silent --no-print-directory re
+run_step "run with sanitizer" make --silent --no-print-directory asan
 
 # Results
 echo "=============================="
