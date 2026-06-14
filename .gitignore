@@ -10,6 +10,7 @@ bin/
 
 # Logs
 .logs/
+.githooks/logs
 
 # Editor files
 .vscode/*
