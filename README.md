@@ -18,6 +18,7 @@
 * [RFC 9112: Hypertext Transfer Protocol (HTTP/1.1) Specification](https://www.rfc-editor.org/info/rfc9112/)
 * [MDN Web Docs: An Overview of HTTP](https://developer.mozilla.org/en/docs/Web/HTTP/Guides/Overview)
 * [Wikipedia: Transmission Control Protocol (TCP)](https://en.wikipedia.org/wiki/Transmission_Control_Protocol)
+* [Beej's Guide to Network Programming: Using Internet Sockets](https://beej.us/guide/bgnet/)
 
 ### Guides & Architecture
 * [MDN Web Docs: Evolution of HTTP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Evolution_of_HTTP)
