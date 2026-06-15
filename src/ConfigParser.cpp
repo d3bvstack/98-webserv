@@ -64,6 +64,16 @@ void ConfigParser::parseKeyValue(const std::string& line, std::string& key, std:
     value = ConfigParser::trim(line.substr(eq_pos + 1));
 }
 
+/**
+ * @brief Parses global configuration.
+ *
+ * @param server Pointer to the Server object where the parsed global
+ * configuration will be applied.
+ * @param line The current trimmed line from the configuration file being
+ * parsed.
+ *
+ * @throws std::invalid_argument If an invalid token is encountered.
+ */
 void ConfigParser::parseGlobal(Server* server, const std::string& line)
 {
     (void) server;
@@ -78,6 +88,16 @@ void ConfigParser::parseGlobal(Server* server, const std::string& line)
     }
 }
 
+/**
+ * @brief Parses a virtual host block.
+ *
+ * @param server Pointer to the Server object where the parsed virtual host
+ * configuration will be added.
+ * @param line The current trimmed line from the configuration file being
+ * parsed.
+ *
+ * @throws std::invalid_argument If an invalid token is encountered.
+ */
 void  ConfigParser::parseVhost(Server* server, const std::string& line)
 {
     if (line == "[vhost.end]")
@@ -111,6 +131,17 @@ void  ConfigParser::parseVhost(Server* server, const std::string& line)
     }
 }
 
+/**
+ * @brief Parses a location block within a virtual host.
+ *
+ * @param server Pointer to the Server object where the parsed location
+ * configuration will be added.
+ * @param line The current trimmed line from the configuration file being 
+ * parsed.
+ *
+ * @throws std::invalid_argument If an invalid token is encountered
+ * within the location block.
+ */
 void ConfigParser::parseLocation(Server* server, const std::string& line)
 {
     (void)server;
@@ -138,6 +169,16 @@ void ConfigParser::parseLocation(Server* server, const std::string& line)
         }
     }
 }
+
+/**
+ * @brief Parses the configuration files and fills the Server object.
+ *
+ * Iterates through each configuration file, parses each line, 
+ * and calls the appropriate parsing function based on the current state.
+ *
+ * @param server Pointer to the Server object to be filled with parsed
+ * configuration data.
+ */
 
 void ConfigParser::parse(Server* server)
 {

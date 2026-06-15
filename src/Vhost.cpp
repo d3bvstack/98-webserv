@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 19:26:45 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/15 22:20:37 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,7 +148,8 @@ void Vhost::debugVhost() const
             std::cout << it->first << " --> " << it->second << "; ";
         }
     } 
-    else {
+    else 
+    {
         std::cout << "NONE";
     }
     std::cout << std::endl;
