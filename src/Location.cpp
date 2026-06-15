@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 20:21:52 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/15 22:30:18 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 Location::Location() 
     : _autoindex(false), _autoindex_set(false), _max_body_size(0), _max_body_size_set(false)
@@ -71,9 +72,20 @@ void Location::setMaxBodySize(const std::string& value)
     _max_body_size_set = true;
 }
 
-void Location::addDefault(const std::string& default_file)
+void Location::addDefault(const std::string& default_files)
 {
-    _defaults.push_back(default_file);
+    if (!_defaults.empty())
+    {
+        throw std::runtime_error("Defaults already set for this location");
+    }
+    
+    std::string token;
+    std::istringstream iss(default_files);
+    
+    while (iss >> token)
+    {
+        _defaults.push_back(token);
+    }
 }
 
 void Location::setReturn(const std::string& value)
