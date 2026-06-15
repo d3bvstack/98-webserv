@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/12 00:15:53 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/14 12:17:27 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 #include <sstream>
 
 #include "Server.hpp"
-
 
 volatile sig_atomic_t keepRunning = 1;
 volatile sig_atomic_t receivedSignal = 0;
@@ -43,6 +42,7 @@ int main(int argc, char** argv)
             webserver = new Server; // Use default config directory
 
         webserver->debugServer();
+        webserver->parseConf();
     
         while (keepRunning)
         {
