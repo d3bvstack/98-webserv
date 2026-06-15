@@ -43,6 +43,7 @@ int main(int argc, char** argv)
 
         webserver->debugServer();
         webserver->parseConf();
+        webserver->debugServer();
     
         while (keepRunning)
         {

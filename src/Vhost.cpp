@@ -47,6 +47,10 @@ void Vhost::setHost(std::string host)
     {
         throw std::logic_error("Host is already set.");
     }
+    if (host.empty()) 
+    {
+        throw std::invalid_argument("Host cannot be empty.");
+    }
     _host = host;
 }
 
@@ -117,55 +121,55 @@ void Vhost::addLocation(Location location)
 
 void Vhost::debugVhost() const 
 {
-    std::cout << "Server Name: "
+    std::cerr << "  Server Name: "
               << (isServerNameSet() ? getServerName() : "NOT SET")
               << std::endl;
 
-    std::cout << "Host: ";
+    std::cerr << "  Host: ";
     if (isHostSet()) 
-        std::cout << getHost() << std::endl;
+        std::cerr << getHost() << std::endl;
     else 
-        std::cout << "NOT SET" << std::endl;
+        std::cerr << "NOT SET" << std::endl;
 
-    std::cout << "Port: ";
+    std::cerr << "  Port: ";
     if (isPortSet()) 
-        std::cout << getPort() << std::endl;
+        std::cerr << getPort() << std::endl;
     else 
-        std::cout << "NOT SET" << std::endl;
+        std::cerr << "NOT SET" << std::endl;
 
-    std::cout << "MaxBodySize: ";
+    std::cerr << "  MaxBodySize: ";
     if (isMaxBodySizeSet()) 
-        std::cout << getMaxBodySize() << " bytes";
+        std::cerr << getMaxBodySize() << " bytes" << std::endl;
     else 
-        std::cout << "NOT SET" << std::endl;
+        std::cerr << "NOT SET" << std::endl;
 
-    std::cout << "Error Pages: ";
+    std::cerr << "  Error Pages: ";
     if (isErrorPagesSet()) 
     {
         for (std::map<u_int16_t,std::string>::const_iterator it = _errorPages.begin(); 
             it != _errorPages.end(); ++it) 
         {
-            std::cout << it->first << " --> " << it->second << "; ";
+            std::cerr << it->first << " --> " << it->second << "; ";
         }
     } 
     else 
     {
-        std::cout << "NONE";
+        std::cerr << "NONE";
     }
-    std::cout << std::endl;
+    std::cerr << std::endl;
 
-    std::cout << "CGI Parameters: ";
+    std::cerr << "  CGI Parameters: ";
     if (isCGISet())
     {
         for (std::map<std::string,std::string>::const_iterator it = _cgi.begin(); 
             it != _cgi.end(); ++it) 
         {
-            std::cout << it->first << "=" << it->second << "; ";
+            std::cerr << it->first << "=" << it->second << "; ";
         }
     } 
     else 
     {
-        std::cout << "NONE";
+        std::cerr << "NONE";
     }
-    std::cout << std::endl;
+    std::cerr << std::endl;
 }

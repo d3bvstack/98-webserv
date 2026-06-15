@@ -97,6 +97,10 @@ void Server::debugServer() const
     int i = 0;
     for (std::vector<std::string>::const_iterator it = _configurationFiles.begin(); it != _configurationFiles.end(); ++it, ++i)
         std::cerr << "[DEBUG][SERVER] Configuration file " << i << ": " + *it << std::endl;
+    i = 0;
     for (std::vector<Vhost>::const_iterator it = _vhosts.begin(); it != _vhosts.end(); ++it, ++i)
+    {
+        std::cerr << "[DEBUG][SERVER] Vhost " << i << ":" << std::endl;
         it->debugVhost();
+    }
 }
