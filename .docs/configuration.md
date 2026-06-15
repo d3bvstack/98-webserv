@@ -78,6 +78,22 @@ A location block is enclosed within the following tags:
 * Defines allowed HTTP methods for the route.
    * Defaults to only GET if omitted.
    * Example: `methods = GET POST DELETE`
+### autoindex (Optional)
+* Enables or disables directory listing for the location.
+   * Accepts `true` or `false`.
+   * Defaults to `false` if omitted.
+   * Example: `autoindex = true`
+### default (Optional)
+* Specifies default files to serve when accessing a directory.
+   * Multiple files can be defined
+   * Example: `default = index.html index.php index`
+### upload_store (Optional)
+* Defines the directory where uploaded files are stored.
+   * Example: `upload_store = /var/www/uploads`
+### max_body_size (Optional)
+* Defines the maximum client request size in bytes for this location.
+   * Overrides the vhost-level `max_body_size` if set.
+   * Example: `max_body_size = 5242880`
 
 ------------------------------
 
