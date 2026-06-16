@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 23:33:46 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/16 22:54:00 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,14 +45,15 @@ int main(int argc, char** argv)
         webserver->debugServer();
         webserver->parseConf();
         webserver->debugServer();
+        webserver->bindListeningSockets();
+        webserver->registerListeningSocketsWithEpoll();
+        // webserver->startListening();
 
-        Epoll epoll;
-    
         while (keepRunning)
         {
             usleep(100000);
         }
-        
+
         delete webserver;
         webserver = NULL;
 
@@ -73,6 +74,6 @@ int main(int argc, char** argv)
         }
         return (EXIT_FAILURE);
     }
-    
+
     return (EXIT_SUCCESS);
 }

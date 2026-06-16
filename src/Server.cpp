@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/13 00:26:16 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/16 20:13:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,71 @@ Server::Server(int argc, char **argv)
         throw std::runtime_error("[ERROR] No valid configuration files where provided.");
 
     std::cerr << "[INFO] Server object created successfully." << std::endl;
+}
+
+bool Server::isPortAlreadyBound(std::string host, uint16_t port) const
+{
+    for (std::vector<ListeningSocket>::const_iterator it = _listeningSockets.begin(); it != _listeningSockets.end(); ++it)
+    {
+        if ((*it).getPort() == port && (*it).getHostPresentation() == host)
+            return (true);
+    }
+    return (false);
+}
+
+void Server::bindListeningSockets()
+{
+    for (std::vector<Vhost>::const_iterator it = _vhosts.begin(); it != _vhosts.end(); ++it)
+    {
+        u_int16_t port = (*it).getPort();
+        std::string host = (*it).getHost();
+        try
+        {
+            if (isPortAlreadyBound(host, port))
+            {
+                std::cerr << "[INFO] Port " << port << " is already bound, skipping" << std::endl;
+                continue;
+            }
+            std::cerr << "[INFO] Creating server socket on port " << port << std::endl;
+            ListeningSocket tempSocket(host, port);
+            tempSocket.create();
+            tempSocket.setReusePort();
+            tempSocket.bind();
+            tempSocket.setNonBlocking();
+            _listeningSockets.push_back(tempSocket);
+            std::cerr << "[INFO] Server socket on port " << port << " created successfully" << std::endl;
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "[ERROR] Couldn't bind listening socket successfully on port " << port << std::endl;
+            std::cerr << "[ERROR] Reason: " << e.what() << std::endl;
+        }
+    }
+    if (_listeningSockets.empty())
+        throw std::runtime_error("No port could be bound successfully.");
+}
+
+void Server::registerListeningSocketsWithEpoll()
+{
+    int registered_n = 0;
+    for (std::vector<ListeningSocket>::const_iterator it = _listeningSockets.begin();
+        it != _listeningSockets.end(); ++it)
+    {
+        try
+        {
+            _epoll.addSocket((*it).getSocketFd());
+            ++registered_n;
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "[ERROR] Couldn't register socket with epoll"<< std::endl;
+            std::cerr << "[ERROR] Reason: " << e.what() << std::endl;
+        }
+    }
+    if (registered_n == 0)
+    {
+        throw std::runtime_error("No sockets registered successfully");
+    }
 }
 
 /**

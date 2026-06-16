@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 15:47:13 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/16 17:18:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,9 @@
 
 #include "Vhost.hpp"
 #include "ConfigParser.hpp"
+#include "ListeningSocket.hpp"
+#include "Epoll.hpp"
+
 
 #include <vector>
 #include <string>
@@ -27,8 +30,13 @@
 class Server
 {
     private:
-        std::vector<std::string>    _configurationFiles;
-        std::vector<Vhost>          _vhosts;
+        std::vector<std::string>        _configurationFiles;
+        std::vector<Vhost>              _vhosts;
+        std::vector<ListeningSocket>    _listeningSockets;
+
+        Epoll                           _epoll;
+
+        bool isPortAlreadyBound(std::string host, uint16_t port) const;
 
     public:
         Server();
@@ -40,6 +48,8 @@ class Server
         void setVhosts(const std::vector<Vhost>& vhosts)    { _vhosts = vhosts; }
         void addVhosts(const Vhost& vhost)                  { _vhosts.push_back(vhost); }
         void parseConf()                                    { ConfigParser::parse(this); }
+        void bindListeningSockets();
+        void registerListeningSocketsWithEpoll();
 
         void debugServer() const;
 };

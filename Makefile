@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/04/27 22:36:40 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/06/15 23:41:42 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/06/16 17:45:32 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ CXX ?= c++
 CXXFLAGS ?= -Wall -Wextra -Werror -std=c++98 -pedantic
 RM = rm -f
 
-INCLUDES = -Iinclude
+INCLUDES = -Iinclude -Iinclude/sockets
 
 OBJDIR = obj
 
@@ -24,7 +24,8 @@ SRCS =	src/main.cpp \
 		src/Vhost.cpp \
 		src/Location.cpp \
 		src/ConfigParser.cpp \
-		src/Epoll.cpp
+		src/Epoll.cpp \
+		src/sockets/ListeningSocket.cpp
 
 OBJS = $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 OBJDIRS = $(sort $(dir $(OBJS)))
