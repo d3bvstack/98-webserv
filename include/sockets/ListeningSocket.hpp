@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:06:00 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/16 19:41:52 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 15:23:55 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,10 @@
 
 #include <string>
 #include <sys/types.h>
+
+#ifndef LISTEN_BACKLOG
+# define LISTEN_BACKLOG 265
+#endif
 
 class ListeningSocket
 {
@@ -36,5 +40,5 @@ class ListeningSocket
         void setReusePort();
         void setNonBlocking();
         void bind();
-
+        void listen();
 };

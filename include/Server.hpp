@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/16 17:18:31 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 10:45:44 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class Server
         void parseConf()                                    { ConfigParser::parse(this); }
         void bindListeningSockets();
         void registerListeningSocketsWithEpoll();
+        void startListening();
 
         void debugServer() const;
 };

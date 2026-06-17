@@ -23,7 +23,7 @@ ListeningSocket::ListeningSocket(std::string host, u_int16_t port)
 {
 	struct in_addr net_bytes;
 
-    if (inet_pton(AF_INET, _hostStr.c_str(), &net_bytes) != 1) 
+    if (inet_pton(AF_INET, _hostStr.c_str(), &net_bytes) != 1)
 	{
         throw std::runtime_error("Invalid IP address configuration: " + _hostStr);
     }
@@ -77,8 +77,6 @@ void ListeningSocket::setNonBlocking()
 	std::cerr << "[INFO] Socket fd " << _socketFd << " set to non-blocking mode" << std::endl;
 }
 
-
-
 void ListeningSocket::bind()
 {
 	if (_socketFd == -1)
@@ -98,6 +96,20 @@ void ListeningSocket::bind()
 		throw std::runtime_error("Failed to bind socket");
 	}
 	std::cerr << "[INFO] Socket fd " << _socketFd << " bound to port " << _port << std::endl;
+}
+
+void ListeningSocket::listen()
+{
+	if (_socketFd == -1)
+	{
+		throw std::runtime_error("Tying to listen of non fd.");
+	}
+
+	if (::listen(_socketFd, LISTEN_BACKLOG) == -1)
+	{
+		throw std::runtime_error("Failed to listen on socket" + _socketFd);
+	}
+	std::cerr << "[INFO] Socket fd " << _socketFd << " listening on port " << _port << std::endl;
 }
 
 int ListeningSocket::getSocketFd() const

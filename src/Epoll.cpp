@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/16 17:34:37 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 10:30:36 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ void Epoll::addSocket(u_int32_t fd)
     {
         std::stringstream out;
         out << "Failed to add socket to epoll: " << errno
-                  << " - " << strerror(errno) << std::endl;
+            << " - " << strerror(errno) << std::endl;
         throw std::runtime_error(out.str());
     }
     std::cerr << "[INFO] Socket with fd " << fd << " added to epoll" << std::endl;

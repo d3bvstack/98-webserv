@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/16 20:13:31 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 14:33:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,6 +150,15 @@ void Server::registerListeningSocketsWithEpoll()
     if (registered_n == 0)
     {
         throw std::runtime_error("No sockets registered successfully");
+    }
+}
+
+void Server::startListening()
+{
+    for(std::vector<ListeningSocket>::iterator it = _listeningSockets.begin();
+        it != _listeningSockets.end(); ++it)
+    {
+        (*it).listen();
     }
 }
 

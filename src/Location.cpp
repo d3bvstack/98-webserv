@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 22:30:18 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 14:40:33 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <iostream>
 #include <sstream>
 
-Location::Location() 
+Location::Location()
     : _autoindex(false), _autoindex_set(false), _max_body_size(0), _max_body_size_set(false)
 {
 }
@@ -78,10 +78,10 @@ void Location::addDefault(const std::string& default_files)
     {
         throw std::runtime_error("Defaults already set for this location");
     }
-    
+
     std::string token;
     std::istringstream iss(default_files);
-    
+
     while (iss >> token)
     {
         _defaults.push_back(token);
@@ -117,7 +117,7 @@ void Location::debugLocation() const
     std::cerr << "  root: " << (_root.empty() ? "(not set)" : _root) << std::endl;
     std::cerr << "  autoindex: " << (_autoindex ? "true" : "false") << std::endl;
     std::cerr << "  upload_store: " << (_upload_store.empty() ? "(not set)" : _upload_store) << std::endl;
-    
+
     if (_max_body_size_set)
     {
         std::cerr << "  max_body_size: " << _max_body_size << std::endl;
@@ -126,7 +126,7 @@ void Location::debugLocation() const
     {
         std::cerr << "  max_body_size: (not set)" << std::endl;
     }
-    
+
     if (_defaults.empty())
     {
         std::cerr << "  defaults: (not set)" << std::endl;
@@ -141,7 +141,7 @@ void Location::debugLocation() const
         }
         std::cerr << std::endl;
     }
-    
+
     if (_return.first == 0)
     {
         std::cerr << "  return: (not set)" << std::endl;
@@ -150,7 +150,7 @@ void Location::debugLocation() const
     {
         std::cerr << "  return: " << _return.first << " " << _return.second << std::endl;
     }
-    
+
     if (_methods.empty())
     {
         std::cerr << "  methods: (not set)" << std::endl;
@@ -158,10 +158,11 @@ void Location::debugLocation() const
     else
     {
         std::cerr << "  methods: ";
-        for (std::map<std::string, std::string>::const_iterator it = _methods.begin(); 
+        for (std::map<std::string, std::string>::const_iterator it = _methods.begin();
              it != _methods.end(); ++it)
         {
-            if (it != _methods.begin()) std::cerr << ", ";
+            if (it != _methods.begin())
+                std::cerr << ", ";
             std::cerr << it->first << "=" << it->second;
         }
         std::cerr << std::endl;

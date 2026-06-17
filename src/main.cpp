@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/16 22:54:00 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/17 10:31:18 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
         webserver->debugServer();
         webserver->bindListeningSockets();
         webserver->registerListeningSocketsWithEpoll();
-        // webserver->startListening();
+        webserver->startListening();
 
         while (keepRunning)
         {
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
         {
             std::stringstream ss;
             ss << receivedSignal;
-            std::cout << "[SIGNAL] A signal was detected and terminated the execution, SIGNAL =" << ss.str() << std::endl;
+            std::cout << "[SIGNAL] A signal was detected and terminated the execution, SIGNAL = " << ss.str() << std::endl;
         }
     }
     catch(const std::exception& e)
