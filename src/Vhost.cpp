@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/22 23:03:01 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:11:24 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void Vhost::setHost(std::string host)
     _host = host;
 }
 
-void Vhost::setPort(u_int32_t port)
+void Vhost::setPort(uint32_t port)
 {
     if (isPortSet())
     {
@@ -68,7 +68,7 @@ void Vhost::setPort(u_int32_t port)
     _port = std::make_pair(true, port);
 }
 
-void Vhost::setMaxBodySize(u_int64_t size)
+void Vhost::setMaxBodySize(uint64_t size)
 {
     if (isMaxBodySizeSet())
     {

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 16:31:06 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:11:13 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ Epoll::~Epoll()
     }
 }
 
-void Epoll::addSocket(u_int32_t fd)
+void Epoll::addSocket(uint32_t fd)
 {
     epoll_event event;
     event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP; // EPOLLRDHUP triggers when client closes connection
@@ -56,7 +56,7 @@ void Epoll::addSocket(u_int32_t fd)
     std::cerr << "[INFO] Socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::removeSocket(u_int32_t fd)
+void Epoll::removeSocket(uint32_t fd)
 {
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {

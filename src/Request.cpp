@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 14:11:51 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 16:08:22 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:32:59 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,20 +128,20 @@ bool Request::operator==(const Request& other) const
 
 void Request::debugRequest() const
 {
-    std::cout << "-------------- REQUEST --------------" << std::endl;
-    std::cout << "Method:       [" << _method << "]" << std::endl;
-    std::cout << "Path:         [" << _path << "]" << std::endl;
-    std::cout << "Version:      [" << _version << "]" << std::endl;
-    std::cout << "Query String: [" << _query_string << "]" << std::endl;
+    std::cerr << "-------------- REQUEST --------------" << std::endl;
+    std::cerr << "Method:       [" << _method << "]" << std::endl;
+    std::cerr << "Path:         [" << _path << "]" << std::endl;
+    std::cerr << "Version:      [" << _version << "]" << std::endl;
+    std::cerr << "Query String: [" << _query_string << "]" << std::endl;
 
-    std::cout << "Headers:" << std::endl;
+    std::cerr << "Headers:" << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
          it != _headers.end(); ++it)
     {
-        std::cout << "  " << it->first << ": " << it->second << std::endl;
+        std::cerr << "  " << it->first << ": " << it->second << std::endl;
     }
 
-    std::cout << "Body (" << _body.length() << " bytes):" << std::endl;
-    std::cout << _body << std::endl;
-    std::cout << "-------------------------------------" << std::endl;
+    std::cerr << "Body (" << _body.length() << " bytes):" << std::endl;
+    std::cerr << _body << std::endl;
+    std::cerr << "-------------------------------------" << std::endl;
 }

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:31:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/19 10:12:33 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:32:00 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 #include <sstream>
 
-std::string ConfigParser::trim(const std::string& str)
+std::string ConfigParser::trimAndStripComments(const std::string& str)
 {
     size_t start = str.find_first_not_of(" \t\r\n");
     if (start == std::string::npos)
@@ -60,8 +60,8 @@ void ConfigParser::parseKeyValue(const std::string& line, std::string& key, std:
     {
         throw std::invalid_argument("Invalid format, expected \"key = value\"");
     }
-    key = ConfigParser::trim(line.substr(0, eq_pos));
-    value = ConfigParser::trim(line.substr(eq_pos + 1));
+    key = ConfigParser::trimAndStripComments(line.substr(0, eq_pos));
+    value = ConfigParser::trimAndStripComments(line.substr(eq_pos + 1));
 }
 
 /**
@@ -116,17 +116,15 @@ void  ConfigParser::parseVhost(Server* server, const std::string& line)
         std::string value;
 
         parseKeyValue(line, key, value);
+        if (key == "host") _currentVhost.setHost(value);
+        else if (key == "listen") _currentVhost.setPort(stringToNum<uint32_t>(value));
+        else if (key == "server_name") _currentVhost.setServerName(value);
+        else if (key == "max_body_size") _currentVhost.setMaxBodySize(stringToNum<uint64_t>(value));
+        else if (key == "error_page") _currentVhost.addErrorPages(value);
+        else if (key == "cgi") _currentVhost.addCGI(value);
+        else
         {
-            if (key == "host") _currentVhost.setHost(value);
-            else if (key == "listen") _currentVhost.setPort(stringToNum<u_int32_t>(value));
-            else if (key == "server_name") _currentVhost.setServerName(value);
-            else if (key == "max_body_size") _currentVhost.setMaxBodySize(stringToNum<u_int64_t>(value));
-            else if (key == "error_page") _currentVhost.addErrorPages(value);
-            else if (key == "cgi") _currentVhost.addCGI(value);
-            else
-            {
-                throw std::invalid_argument("Invalid token in vhost block");
-            }
+            throw std::invalid_argument("Invalid token in vhost block");
         }
     }
 }
@@ -201,7 +199,7 @@ void ConfigParser::parse(Server* server)
 
             for (; std::getline(currentFile, current_line); ++line_n)
             {
-                current_line = ConfigParser::trim(current_line);
+                current_line = ConfigParser::trimAndStripComments(current_line);
                 if (current_line.empty() || current_line[0] == ';')
                     continue;
 
@@ -236,6 +234,6 @@ ConfigParser::~ConfigParser()
 }
 
 // Static member initializations
-ConfigParser::StateFunc ConfigParser::_state = &ConfigParser::parseGlobal;
+ConfigParser::StateFuncPtr ConfigParser::_state = &ConfigParser::parseGlobal;
 Vhost ConfigParser::_currentVhost;
 Location ConfigParser::_currentLocation;

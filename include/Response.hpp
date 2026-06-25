@@ -6,9 +6,11 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 09:52:45 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 17:40:31 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:06:42 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#pragma once
 
 #include <string>
 #include <map>
@@ -23,6 +25,7 @@ class Response
 		std::string _reason;
 		std::string _version;
 		std::map<std::string, std::string> _headers;
+		std::string _body;
 
 		std::string codeToReason(int code) const;
 		std::string numToString(size_t num) const;
@@ -32,7 +35,6 @@ class Response
 		Response(int code);
 		~Response();
 
-		std::string _body;
 
 		bool operator==(const Response& other) const;
 

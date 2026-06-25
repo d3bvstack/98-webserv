@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/22 23:03:01 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:08:54 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ Location::~Location()
 
 void Location::setAutoindex(const std::string& value)
 {
-    if (_autoindex_set)
+    if (isAutoindexSet())
     {
         throw std::runtime_error("Autoindex already set for this location");
     }

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 18:17:46 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:32:46 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,19 +137,19 @@ std::string Response::toString() const
 
 void Response::debugResponse() const
 {
-    std::cout << "-------------- RESPONSE --------------" << std::endl;
-    std::cout << "Status Code:    [" << _statusCode << "]" << std::endl;
-    std::cout << "Reason:         [" << _reason << "]" << std::endl;
-    std::cout << "Version:        [" << _version << "]" << std::endl;
+    std::cerr << "-------------- RESPONSE --------------" << std::endl;
+    std::cerr << "Status Code:    [" << _statusCode << "]" << std::endl;
+    std::cerr << "Reason:         [" << _reason << "]" << std::endl;
+    std::cerr << "Version:        [" << _version << "]" << std::endl;
 
-    std::cout << "Headers:" << std::endl;
+    std::cerr << "Headers:" << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
          it != _headers.end(); ++it)
     {
-        std::cout << "  " << it->first << ": " << it->second << std::endl;
+        std::cerr << "  " << it->first << ": " << it->second << std::endl;
     }
 
-    std::cout << "Body (" << _body.length() << " bytes):" << std::endl;
-    std::cout << _body << std::endl;
-    std::cout << "-------------------------------------" << std::endl;
+    std::cerr << "Body (" << _body.length() << " bytes):" << std::endl;
+    std::cerr << _body << std::endl;
+    std::cerr << "-------------------------------------" << std::endl;
 }

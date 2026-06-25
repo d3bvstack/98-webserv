@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:10:01 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/24 14:17:47 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:33:23 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,12 @@
 
 #include <sys/epoll.h>
 
+#ifndef EPOLL_MAX_EVENTS
+# define EPOLL_MAX_EVENTS 1024
+#endif
+
 class Epoll
 {
-    #ifndef EPOLL_MAX_EVENTS
-    # define EPOLL_MAX_EVENTS 1024
-    #endif
 
     private:
         int         _epollFd;
@@ -28,8 +29,8 @@ class Epoll
         Epoll();
         ~Epoll();
 
-        void addSocket(u_int32_t fd);
-        void removeSocket(u_int32_t fd);
+        void addSocket(uint32_t fd);
+        void removeSocket(uint32_t fd);
         int waitWrapper();
 
         epoll_event *getEvents()    { return (_events); }

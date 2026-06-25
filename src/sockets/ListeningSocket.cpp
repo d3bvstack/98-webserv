@@ -100,7 +100,7 @@ uint16_t ListeningSocket::getPort() const
 	return (_port);
 }
 
-u_int32_t ListeningSocket::getHostNum() const
+uint32_t ListeningSocket::getHostNum() const
 {
 	return (_hostNum);
 }

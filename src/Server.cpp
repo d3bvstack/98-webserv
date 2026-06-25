@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 21:45:29 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:15:47 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -462,7 +462,7 @@ void Server::handleClientIncomingEvent(int clientFd)
         size_t pos = headers.find("Content-Length:");
         if (pos != std::string::npos)
         {
-            std::stringstream sstream(headers.substr(pos + 15));
+            std::stringstream sstream(headers.substr(pos + 15)); // 15 for "Content-Length".length()
             sstream >> contentLength;
         }
 
@@ -489,11 +489,11 @@ void Server::handleClientIncomingEvent(int clientFd)
     else
     {
         std::cerr << "[INFO] Complete HTTP request (no body) received on fd " << clientFd << std::endl;
-        Request request(client->getReadBuffer());
         try
         {
             Request request(client->getReadBuffer());
             client->addPendingRequest(request);
+            client->removeFromReadBuffer(headerEndPos + 4);
         }
         catch(const std::exception& e)
         {
@@ -505,7 +505,6 @@ void Server::handleClientIncomingEvent(int clientFd)
             // client->setDisconnect(true);
             // set client connection flag to disconnect when message fully written
         }
-        client->removeFromReadBuffer(headerEndPos + 4);
     }
 }
 

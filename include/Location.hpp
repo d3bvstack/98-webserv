@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:07:04 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/22 23:02:47 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:11:24 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class Location
         std::string _path;
         std::string _root;
         std::string _upload_store;
-        u_int64_t   _max_body_size;
+        uint64_t   _max_body_size;
         bool        _max_body_size_set;
         std::vector<std::string> _defaults;
         std::pair<uint16_t, std::string>  _return;
@@ -37,7 +37,7 @@ class Location
         Location();
         ~Location();
 
-        bool isAutoindexSet() const                                 { return _autoindex; }
+        bool isAutoindexSet() const                                 { return _autoindex_set; }
         bool isPathSet() const                                      { return !_path.empty(); }
         bool isRootSet() const                                      { return !_root.empty(); }
         bool isUploadStoreSet() const                               { return !_upload_store.empty(); }
@@ -53,7 +53,7 @@ class Location
         const std::vector<std::string>& getDefaults() const         { return _defaults; }
         const std::pair<uint16_t, std::string>& getReturn() const  { return _return; }
         const std::vector<std::string>& getMethods() const { return _methods; }
-        u_int64_t getMaxBodySize() const                            { return _max_body_size; }
+        uint64_t getMaxBodySize() const                            { return _max_body_size; }
 
         void setAutoindex(const std::string& value);
         void setPath(const std::string& path);

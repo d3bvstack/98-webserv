@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:01:24 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/23 11:36:05 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 00:32:00 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,15 +23,15 @@ class ConfigParser
     private:
         ConfigParser();
 
-        typedef void (*StateFunc)(Server* server, const std::string&);
+        typedef void (*StateFuncPtr)(Server* server, const std::string&);
 
-        static StateFunc       _state;
+        static StateFuncPtr       _state;
         static Vhost           _currentVhost;
         static Location        _currentLocation;
 
         template <typename T>
         static T stringToNum(const std::string& str);
-        static std::string trim(const std::string& str);
+        static std::string trimAndStripComments(const std::string& str);
         static void parseKeyValue(const std::string& line, std::string& key, std::string& value);
 
         // States
