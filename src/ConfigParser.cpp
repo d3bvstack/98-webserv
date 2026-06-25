@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:31:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 20:24:23 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/19 10:12:33 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ T ConfigParser::stringToNum(const std::string& str)
 void ConfigParser::parseKeyValue(const std::string& line, std::string& key, std::string& value)
 {
     size_t eq_pos = line.find('=');
-    if (eq_pos == std::string::npos) 
+    if (eq_pos == std::string::npos)
     {
         throw std::invalid_argument("Invalid format, expected \"key = value\"");
     }
@@ -136,7 +136,7 @@ void  ConfigParser::parseVhost(Server* server, const std::string& line)
  *
  * @param server Pointer to the Server object where the parsed location
  * configuration will be added.
- * @param line The current trimmed line from the configuration file being 
+ * @param line The current trimmed line from the configuration file being
  * parsed.
  *
  * @throws std::invalid_argument If an invalid token is encountered
@@ -162,7 +162,7 @@ void ConfigParser::parseLocation(Server* server, const std::string& line)
         else if (key == "max_body_size") _currentLocation.setMaxBodySize(value);
         else if (key == "default") _currentLocation.addDefault(value);
         else if (key == "return") _currentLocation.setReturn(value);
-        else if (key == "methods") _currentLocation.addMethod(value, "allowed");
+        else if (key == "methods") _currentLocation.addMethod(value);
         else
         {
              throw std::invalid_argument("Invalid token in location block");
@@ -173,7 +173,7 @@ void ConfigParser::parseLocation(Server* server, const std::string& line)
 /**
  * @brief Parses the configuration files and fills the Server object.
  *
- * Iterates through each configuration file, parses each line, 
+ * Iterates through each configuration file, parses each line,
  * and calls the appropriate parsing function based on the current state.
  *
  * @param server Pointer to the Server object to be filled with parsed
@@ -188,7 +188,7 @@ void ConfigParser::parse(Server* server)
         int line_n = 0;
         std::string current_line = "";
 
-        try 
+        try
         {
             std::ifstream currentFile((*it).c_str());
             if (!currentFile.is_open())
@@ -204,7 +204,7 @@ void ConfigParser::parse(Server* server)
                 current_line = ConfigParser::trim(current_line);
                 if (current_line.empty() || current_line[0] == ';')
                     continue;
-                
+
                 _state(server, current_line);
             }
             if (_state != &ConfigParser::parseGlobal)

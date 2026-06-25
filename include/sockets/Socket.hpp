@@ -1,36 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Epoll.hpp                                          :+:      :+:    :+:   */
+/*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/15 23:10:01 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/24 14:17:47 by dbarba-v         ###   ########.fr       */
+/*   Created: 2026/06/18 16:30:00 by dbarba-v          #+#    #+#             */
+/*   Updated: 2026/06/18 16:30:00 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <sys/epoll.h>
+#include <sys/types.h>
 
-class Epoll
+# define SOCKET_TYPE_LISTEN 0
+# define SOCKET_TYPE_CLIENT 1
+
+class Socket
 {
-    #ifndef EPOLL_MAX_EVENTS
-    # define EPOLL_MAX_EVENTS 1024
-    #endif
+	protected:
+		int _socketFd;
+		int _socketType;
 
-    private:
-        int         _epollFd;
-        epoll_event _events[EPOLL_MAX_EVENTS];
+	public:
+		Socket();
+		virtual ~Socket();
 
-    public:
-        Epoll();
-        ~Epoll();
-
-        void addSocket(u_int32_t fd);
-        void removeSocket(u_int32_t fd);
-        int waitWrapper();
-
-        epoll_event *getEvents()    { return (_events); }
+		int getSocketFd() const;
+		int getSocketType() const;
 };
+

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/17 14:40:33 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/22 23:03:01 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <iostream>
+#include <stdint.h>
 #include <sstream>
 
 Location::Location()
@@ -81,7 +82,6 @@ void Location::addDefault(const std::string& default_files)
 
     std::string token;
     std::istringstream iss(default_files);
-
     while (iss >> token)
     {
         _defaults.push_back(token);
@@ -99,41 +99,41 @@ void Location::setReturn(const std::string& value)
     {
         throw std::invalid_argument("Redirection must be in format: 'return = code target'");
     }
-    u_int16_t code = std::strtoul(value.substr(0, space).c_str(), NULL, 10);
+    uint16_t code = std::strtoul(value.substr(0, space).c_str(), NULL, 10);
     std::string target = value.substr(space + 1);
     _return.first = code;
     _return.second = target;
 }
 
-void Location::addMethod(const std::string& method, const std::string& status)
+void Location::addMethod(const std::string& method)
 {
-    _methods[method] = status;
+    _methods.push_back(method);
 }
 
 void Location::debugLocation() const
 {
-    std::cerr << "[DEBUG] Location:" << std::endl;
-    std::cerr << "  path: " << (_path.empty() ? "(not set)" : _path) << std::endl;
-    std::cerr << "  root: " << (_root.empty() ? "(not set)" : _root) << std::endl;
-    std::cerr << "  autoindex: " << (_autoindex ? "true" : "false") << std::endl;
-    std::cerr << "  upload_store: " << (_upload_store.empty() ? "(not set)" : _upload_store) << std::endl;
+    std::cerr << "  [DEBUG] Location:" << std::endl;
+    std::cerr << "    path: " << (_path.empty() ? "(not set)" : _path) << std::endl;
+    std::cerr << "    root: " << (_root.empty() ? "(not set)" : _root) << std::endl;
+    std::cerr << "    autoindex: " << (_autoindex ? "true" : "false") << std::endl;
+    std::cerr << "    upload_store: " << (_upload_store.empty() ? "(not set)" : _upload_store) << std::endl;
 
     if (_max_body_size_set)
     {
-        std::cerr << "  max_body_size: " << _max_body_size << std::endl;
+        std::cerr << "    max_body_size: " << _max_body_size << std::endl;
     }
     else
     {
-        std::cerr << "  max_body_size: (not set)" << std::endl;
+        std::cerr << "    max_body_size: (not set)" << std::endl;
     }
 
     if (_defaults.empty())
     {
-        std::cerr << "  defaults: (not set)" << std::endl;
+        std::cerr << "    defaults: (not set)" << std::endl;
     }
     else
     {
-        std::cerr << "  defaults: ";
+        std::cerr << "    defaults: ";
         for (size_t i = 0; i < _defaults.size(); ++i)
         {
             if (i > 0) std::cerr << ", ";
@@ -144,26 +144,26 @@ void Location::debugLocation() const
 
     if (_return.first == 0)
     {
-        std::cerr << "  return: (not set)" << std::endl;
+        std::cerr << "    return: (not set)" << std::endl;
     }
     else
     {
-        std::cerr << "  return: " << _return.first << " " << _return.second << std::endl;
+        std::cerr << "    return: " << _return.first << " " << _return.second << std::endl;
     }
 
     if (_methods.empty())
     {
-        std::cerr << "  methods: (not set)" << std::endl;
+        std::cerr << "    methods: (not set)" << std::endl;
     }
     else
     {
-        std::cerr << "  methods: ";
-        for (std::map<std::string, std::string>::const_iterator it = _methods.begin();
+        std::cerr << "    methods: ";
+        for (std::vector<std::string>::const_iterator it = _methods.begin();
              it != _methods.end(); ++it)
         {
             if (it != _methods.begin())
                 std::cerr << ", ";
-            std::cerr << it->first << "=" << it->second;
+            std::cerr << *it ;
         }
         std::cerr << std::endl;
     }

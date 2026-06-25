@@ -6,13 +6,14 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 22:20:37 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/22 23:03:01 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Vhost.hpp"
 #include <vector>
 #include <sstream>
+#include <stdint.h>
 #include <cstdlib>
 
 
@@ -28,13 +29,13 @@ Vhost::Vhost()
 Vhost::~Vhost()
 {}
 
-void Vhost::setServerName(const std::string& name) 
+void Vhost::setServerName(const std::string& name)
 {
-    if (isServerNameSet()) 
+    if (isServerNameSet())
     {
         throw std::logic_error("Server name is already set.");
     }
-    if (name.empty()) 
+    if (name.empty())
     {
         throw std::invalid_argument("Server name cannot be empty.");
     }
@@ -43,11 +44,11 @@ void Vhost::setServerName(const std::string& name)
 
 void Vhost::setHost(std::string host)
 {
-    if (isHostSet()) 
+    if (isHostSet())
     {
         throw std::logic_error("Host is already set.");
     }
-    if (host.empty()) 
+    if (host.empty())
     {
         throw std::invalid_argument("Host cannot be empty.");
     }
@@ -56,7 +57,7 @@ void Vhost::setHost(std::string host)
 
 void Vhost::setPort(u_int32_t port)
 {
-    if (isPortSet()) 
+    if (isPortSet())
     {
         throw std::logic_error("Port is already set.");
     }
@@ -69,7 +70,7 @@ void Vhost::setPort(u_int32_t port)
 
 void Vhost::setMaxBodySize(u_int64_t size)
 {
-    if (isMaxBodySizeSet()) 
+    if (isMaxBodySizeSet())
     {
         throw std::logic_error("Max body size is already set.");
     }
@@ -98,7 +99,7 @@ void Vhost::addErrorPages(std::string error_page)
         throw std::runtime_error("Wrong format, expected 'error_pages = code path/to/file'");
     }
 
-    u_int16_t errorCode = static_cast<u_int16_t>(std::atoi(tokens[0].c_str()));
+    uint16_t errorCode = static_cast<uint16_t>(std::atoi(tokens[0].c_str()));
     _errorPages[errorCode] = tokens[1];
 }
 
@@ -119,40 +120,40 @@ void Vhost::addLocation(Location location)
     _locations.push_back(location);
 }
 
-void Vhost::debugVhost() const 
+void Vhost::debugVhost() const
 {
     std::cerr << "  Server Name: "
               << (isServerNameSet() ? getServerName() : "NOT SET")
               << std::endl;
 
     std::cerr << "  Host: ";
-    if (isHostSet()) 
+    if (isHostSet())
         std::cerr << getHost() << std::endl;
-    else 
+    else
         std::cerr << "NOT SET" << std::endl;
 
     std::cerr << "  Port: ";
-    if (isPortSet()) 
+    if (isPortSet())
         std::cerr << getPort() << std::endl;
-    else 
+    else
         std::cerr << "NOT SET" << std::endl;
 
     std::cerr << "  MaxBodySize: ";
-    if (isMaxBodySizeSet()) 
+    if (isMaxBodySizeSet())
         std::cerr << getMaxBodySize() << " bytes" << std::endl;
-    else 
+    else
         std::cerr << "NOT SET" << std::endl;
 
     std::cerr << "  Error Pages: ";
-    if (isErrorPagesSet()) 
+    if (isErrorPagesSet())
     {
-        for (std::map<u_int16_t,std::string>::const_iterator it = _errorPages.begin(); 
-            it != _errorPages.end(); ++it) 
+        for (std::map<uint16_t,std::string>::const_iterator it = _errorPages.begin();
+            it != _errorPages.end(); ++it)
         {
             std::cerr << it->first << " --> " << it->second << "; ";
         }
-    } 
-    else 
+    }
+    else
     {
         std::cerr << "NONE";
     }
@@ -161,15 +162,21 @@ void Vhost::debugVhost() const
     std::cerr << "  CGI Parameters: ";
     if (isCGISet())
     {
-        for (std::map<std::string,std::string>::const_iterator it = _cgi.begin(); 
-            it != _cgi.end(); ++it) 
+        for (std::map<std::string,std::string>::const_iterator it = _cgi.begin();
+            it != _cgi.end(); ++it)
         {
             std::cerr << it->first << "=" << it->second << "; ";
         }
-    } 
-    else 
+    }
+    else
     {
         std::cerr << "NONE";
     }
     std::cerr << std::endl;
+
+    for (std::vector<Location>::const_iterator it = _locations.begin();
+        it != _locations.end(); ++it)
+    {
+        (*it).debugLocation();
+    }
 }

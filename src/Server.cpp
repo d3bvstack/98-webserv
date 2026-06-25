@@ -6,11 +6,18 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/17 14:33:31 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/25 21:45:29 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
+
+#include <sys/socket.h>
+#include <unistd.h>
+#include <sstream>
+#include <cstring>
 
 /**
  * @brief Checks if the string `filename` ends with the provided `extension`
@@ -20,17 +27,13 @@
  * @return `true` or
  * @return `false`
  */
-static bool matchExtension(const std::string& filename, const std::string extension)
+static bool matchExtension(const std::string& filename, const std::string& extension)
 {
-    bool extensionMatch = false;
+    if (filename.length() < extension.length())
+        return (false);
 
-    if (filename.length() >= extension.length())
-    {
-        std::string endOfString = filename.substr(filename.length() - extension.length());
-        extensionMatch = (endOfString == extension);
-    }
-
-    return (extensionMatch);
+    std::string endOfString = filename.substr(filename.length() - extension.length());
+    return (endOfString == extension);
 }
 
 /**
@@ -88,21 +91,65 @@ Server::Server(int argc, char **argv)
     std::cerr << "[INFO] Server object created successfully." << std::endl;
 }
 
-bool Server::isPortAlreadyBound(std::string host, uint16_t port) const
+Server::~Server()
 {
-    for (std::vector<ListeningSocket>::const_iterator it = _listeningSockets.begin(); it != _listeningSockets.end(); ++it)
+    for (size_t i = 0; i < _listeningSockets.size(); ++i)
     {
-        if ((*it).getPort() == port && (*it).getHostPresentation() == host)
+        delete _listeningSockets[i];
+    }
+    _listeningSockets.clear();
+
+    for (size_t i = 0; i < _clientConnections.size(); ++i)
+    {
+        delete _clientConnections[i];
+    }
+    _clientConnections.clear();
+}
+
+void Server::verifyConf()
+{
+    for (std::vector<Vhost>::iterator it = _vhosts.begin(); it != _vhosts.end(); ++it) {
+
+        for (std::vector<Vhost>::iterator it2 = _vhosts.end() - 1; it2 > it; --it2) {
+
+            if (it->getHost() == it2->getHost() && it->getPort() == it2->getPort()) {
+
+                _vhosts.erase(it2);
+
+                std::cerr << "[ERROR] Multiple vhosts on same interface, only first will be used." << std::endl;
+            }
+        }
+    }
+}
+
+
+/**
+ * @brief Check if port already ha a listening socket bount to it
+ *
+ * @param host Address to bound to
+ * @param port Port to bind to
+ * @return `true` Already bound
+ * @return `false` Not bound
+ */
+bool Server::isPortAlreadyBound(const std::string& host, uint16_t port) const
+{
+    for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin(); it != _listeningSockets.end(); ++it)
+    {
+        if ((*it)->getPort() == port && (*it)->getHostPresentation() == host)
             return (true);
     }
     return (false);
 }
 
+/**
+ * @brief Bind Listening sockets according to configured vhosts
+ *
+ */
 void Server::bindListeningSockets()
 {
     for (std::vector<Vhost>::const_iterator it = _vhosts.begin(); it != _vhosts.end(); ++it)
     {
-        u_int16_t port = (*it).getPort();
+        uint16_t port = (*it).getPort();
         std::string host = (*it).getHost();
         try
         {
@@ -112,11 +159,10 @@ void Server::bindListeningSockets()
                 continue;
             }
             std::cerr << "[INFO] Creating server socket on port " << port << std::endl;
-            ListeningSocket tempSocket(host, port);
-            tempSocket.create();
-            tempSocket.setReusePort();
-            tempSocket.bind();
-            tempSocket.setNonBlocking();
+            ListeningSocket *tempSocket = new ListeningSocket(host, port);
+            tempSocket->create();
+            tempSocket->setReusePort();
+            tempSocket->bind();
             _listeningSockets.push_back(tempSocket);
             std::cerr << "[INFO] Server socket on port " << port << " created successfully" << std::endl;
         }
@@ -130,15 +176,19 @@ void Server::bindListeningSockets()
         throw std::runtime_error("No port could be bound successfully.");
 }
 
+/**
+ * @brief Register the listening sockets to be polled for events with the epoll instance
+ *
+ */
 void Server::registerListeningSocketsWithEpoll()
 {
     int registered_n = 0;
-    for (std::vector<ListeningSocket>::const_iterator it = _listeningSockets.begin();
+    for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin();
         it != _listeningSockets.end(); ++it)
     {
         try
         {
-            _epoll.addSocket((*it).getSocketFd());
+            _epoll.addSocket((*it)->getSocketFd());
             ++registered_n;
         }
         catch(const std::exception& e)
@@ -155,11 +205,414 @@ void Server::registerListeningSocketsWithEpoll()
 
 void Server::startListening()
 {
-    for(std::vector<ListeningSocket>::iterator it = _listeningSockets.begin();
+    for(std::vector<ListeningSocket*>::iterator it = _listeningSockets.begin();
         it != _listeningSockets.end(); ++it)
     {
-        (*it).listen();
+        (*it)->listen();
     }
+}
+
+int Server::pollEvents()
+{
+    return (_epoll.waitWrapper());
+}
+
+Socket* Server::socketFromFd(int fd)
+{
+    for (std::vector<ListeningSocket*>::iterator it = _listeningSockets.begin();
+         it != _listeningSockets.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == fd)
+        {
+            return (*it);
+        }
+    }
+    for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
+        it != _clientConnections.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == fd)
+        {
+            return (*it);
+        }
+    }
+    return NULL;
+}
+
+void Server::disconnectClient(int clientFd)
+{
+    std::cerr << "[INFO] Client disconnected on fd " << clientFd << std::endl;
+
+    _epoll.removeSocket(clientFd);
+    close(clientFd);
+
+    for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
+        it != _clientConnections.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == clientFd)
+        {
+            delete *it;
+            _clientConnections.erase(it);
+            break;
+        }
+    }
+}
+
+void Server::acceptNewConnection(Socket* listenSocket)
+{
+    int listenFd = listenSocket->getSocketFd();
+    // accept4 for setting non blocking
+    int newSocketFd = accept4(listenFd, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    if (newSocketFd == -1)
+    {
+        std::cerr << "[ERROR] Accept failed on fd " << listenFd << std::endl;
+        return;
+    }
+
+    uint16_t port = 0;
+    /// Maybe delete Port from client socket and use only poiner to vhost instead
+    for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin();
+         it != _listeningSockets.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == listenFd)
+        {
+            port = (*it)->getPort();
+            break;
+        }
+    }
+
+
+    ClientConnection* newClient = new ClientConnection(newSocketFd, port);
+    for (size_t i = 0; i < _vhosts.size(); ++i)
+    {
+        if (_vhosts[i].getPort() == port)
+        {
+            newClient->setVhost(&_vhosts[i]);
+            break;
+        }
+    }
+    _clientConnections.push_back(newClient);
+    _epoll.addSocket(newSocketFd);
+
+    std::cerr << "[INFO] New connection established on fd " << newSocketFd
+              << " port: " << port << std::endl;
+}
+
+ClientConnection* Server::clientFromFd(int clientFd)
+{
+    for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
+        it != _clientConnections.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == clientFd)
+        {
+            return (*it);
+        }
+    }
+    return NULL;
+}
+
+static std::string decodeChunkedBody(const std::string& body)
+{
+    std::string decoded;
+    size_t pos = 0;
+
+    while (pos < body.length())
+    {
+        size_t nextLine = body.find("\r\n", pos);
+        if (nextLine == std::string::npos)
+        {
+            break;
+        }
+
+        std::string sizeHex = body.substr(pos, nextLine - pos);
+        if (sizeHex.empty())
+        {
+            break;
+        }
+
+        unsigned int chunkSize = 0;
+        std::stringstream ss;
+        ss << std::hex << sizeHex;
+        ss >> chunkSize;
+
+        if (chunkSize == 0)
+        {
+            break;
+        }
+
+        pos = nextLine + 2; // Skip \r\n
+
+        if (pos + chunkSize > body.length())
+        {
+            break;
+        }
+
+        decoded.append(body.substr(pos, chunkSize));
+        pos += chunkSize + 2; // Skip trailing \r\n
+    }
+
+    return (decoded);
+}
+
+
+static bool isValidMethod(const std::string& requestStr)
+{
+    size_t spacePos = requestStr.find(' ');
+    if (spacePos == std::string::npos)
+        return (false);
+
+    std::string method = requestStr.substr(0, spacePos);
+    return (method == "GET" ||
+            method == "POST" ||
+            method == "DELETE" ||
+            method == "PUT" ||
+            method == "HEAD" ||
+            method == "OPTIONS" ||
+            method == "PATCH" ||
+            method == "TRACE" ||
+            method == "CONNECT");
+}
+
+void Server::handleClientIncomingEvent(int clientFd)
+{
+    char buffer[4096];
+    ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+
+    if (bytesRead <= 0)
+    {
+        disconnectClient(clientFd);
+        return;
+    }
+
+    ClientConnection* client = clientFromFd(clientFd);
+    if (client == NULL)
+    {
+        std::cerr << "[ERROR] Client connection not found for fd " << clientFd << std::endl;
+        return;
+    }
+
+    client->appendReadBuffer(buffer, bytesRead);
+    const std::string& fullBuffer = client->getReadBuffer();
+
+    size_t headerEndPos = fullBuffer.find("\r\n\r\n");
+    if (headerEndPos == std::string::npos)
+    {
+        return;
+    }
+
+    std::string headers = fullBuffer.substr(0, headerEndPos);
+    std::string body = fullBuffer.substr(headerEndPos + 4); // +4 to skip \r\n\r\n
+    bool hasHttpHeader = (headers.find("HTTP/") != std::string::npos);
+    if (!isValidMethod(headers) || !hasHttpHeader)
+    {
+        std::cerr << "[ERROR] Invalid HTTP request on fd " << clientFd << std::endl;
+        client->removeFromReadBuffer(std::string::npos);
+        Response response = Response::createErrorResponse(400, *(client->getVhost()));
+        client->addPendingResponse(response);
+        // client->setDisconnect(true);
+        // set client connection flag to disconnect when message fully written
+        return;
+    }
+
+    bool isChunked = (headers.find("Transfer-Encoding: chunked") != std::string::npos);
+    bool hasContentLength = (headers.find("Content-Length:") != std::string::npos);
+
+    if (isChunked && hasContentLength)
+    {
+        std::cerr << "[ERROR] Both Chunked and Content-Length on fd " << clientFd << std::endl;
+        client->removeFromReadBuffer(std::string::npos);
+        Response response = Response::createErrorResponse(400, *(client->getVhost()));
+        client->addPendingResponse(response);
+        // client->setDisconnect(true);
+        // set client connection flag to disconnect when message fully written
+        return;
+    }
+
+    else if (isChunked)
+    {
+        bool isLastChunkReceived = (body.find("0\r\n\r\n") != std::string::npos);
+        if (isLastChunkReceived)
+        {
+            std::cerr << "[INFO] Complete chunked HTTP request received on fd " << clientFd << std::endl;
+
+            std::string unchunkedBody = decodeChunkedBody(body);
+            std::string cleanHeaders = headers;
+            size_t encodingPos = cleanHeaders.find("Transfer-Encoding: chunked");
+            if (encodingPos != std::string::npos)
+            {
+                std::stringstream sstream;
+                sstream << "Content-Length: " << unchunkedBody.length();
+                cleanHeaders.replace(encodingPos, std::string("Transfer-Encoding: chunked").length(), sstream.str());
+            }
+
+            std::string reconstructedRequest = cleanHeaders + "\r\n\r\n" + unchunkedBody;
+            Request request(reconstructedRequest);
+            client->addPendingRequest(request);
+
+            size_t chunkEndPos = body.find("0\r\n\r\n");
+            client->removeFromReadBuffer(headerEndPos + 4 + chunkEndPos + 5);
+        }
+        else
+        {
+            std::cerr << "[INFO] Chunked headers received, waiting for final chunk on fd " << clientFd << std::endl;
+        }
+    }
+    else if (hasContentLength)
+    {
+        int contentLength = 0;
+        size_t pos = headers.find("Content-Length:");
+        if (pos != std::string::npos)
+        {
+            std::stringstream sstream(headers.substr(pos + 15));
+            sstream >> contentLength;
+        }
+
+        if (body.length() >= static_cast<size_t>(contentLength))
+        {
+            std::cerr << "[INFO] Complete Content-Length HTTP request received on fd " << clientFd << std::endl;
+            try
+            {
+                Request request(client->getReadBuffer());
+                client->addPendingRequest(request);
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << "[ERROR] " << e.what() << '\n';
+            }
+
+            client->removeFromReadBuffer(headerEndPos + 4 + contentLength);
+        }
+        else
+        {
+            std::cerr << "[INFO] Waiting for more body bytes on fd " << clientFd << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << "[INFO] Complete HTTP request (no body) received on fd " << clientFd << std::endl;
+        Request request(client->getReadBuffer());
+        try
+        {
+            Request request(client->getReadBuffer());
+            client->addPendingRequest(request);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "[ERROR] " << e.what() << '\n';
+
+            client->removeFromReadBuffer(std::string::npos);
+            Response response = Response::createErrorResponse(400, *(client->getVhost()));
+            client->addPendingResponse(response);
+            // client->setDisconnect(true);
+            // set client connection flag to disconnect when message fully written
+        }
+        client->removeFromReadBuffer(headerEndPos + 4);
+    }
+}
+
+void Server::handleIncomingEvents(int activeEventsCount)
+{
+    epoll_event* events = _epoll.getEvents();
+
+    for (int i = 0; i < activeEventsCount; ++i)
+    {
+        int eventFd = events[i].data.fd;
+        uint32_t eventTypes = events[i].events;
+
+        Socket* socket = socketFromFd(eventFd);
+        if (socket == NULL)
+        {
+            continue;
+        }
+
+        if (eventTypes & (EPOLLERR | EPOLLHUP))
+        {
+            std::cerr << "[ERROR] Socket error or hangup on fd " << eventFd << std::endl;
+            if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            {
+                disconnectClient(eventFd);
+            }
+            else if (socket->getSocketType() == SOCKET_TYPE_LISTEN)
+            {
+                close(eventFd);
+            }
+            continue;
+        }
+
+        if (eventTypes & EPOLLIN)
+        {
+            if (socket->getSocketType() == SOCKET_TYPE_LISTEN)
+            {
+                acceptNewConnection(socket);
+            }
+            else if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            {
+                handleClientIncomingEvent(eventFd);
+            }
+        }
+    }
+}
+
+void Server::handleClientOutgoingEvent(int clientFd)
+{
+    ClientConnection* client = clientFromFd(clientFd);
+    if (client == NULL)
+    {
+        std::cerr << "[ERROR] Client connection not found for fd " << clientFd << std::endl;
+        return;
+    }
+
+    if (client->getWriteBuffer() == NULL)
+    {
+        const std::vector<Response>& pending = client->getPendingResponses();
+        if (pending.empty())
+        {
+            return ;
+        }
+        else
+        {
+            client->setWritePendingBuffer(pending.front());
+            client->sendWritePendingBuffer();
+            client->removePendingResponse(pending.front());
+        }
+    }
+    else
+    {
+        client->sendWritePendingBuffer();
+    }
+}
+
+void Server::handleOutgoingEvents(int activeEventsCount)
+{
+    epoll_event* events = _epoll.getEvents();
+
+
+    for (int i = 0; i < activeEventsCount; ++i)
+    {
+        int eventFd = events[i].data.fd;
+        uint32_t eventTypes = events[i].events;
+
+        Socket* socket = socketFromFd(eventFd);
+        if (socket == NULL)
+        {
+            continue;
+        }
+
+        if (eventTypes & EPOLLOUT)
+        {
+            if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            {
+                handleClientOutgoingEvent(eventFd);
+            }
+        }
+    }
+}
+
+void Server::processPendingRequests()
+{
+    // Process pending requests from all client connections
+    // This method would iterate through _clientConnections
+    // and process each pending request in _requests queue
+    // Generate responses and push to _responses queue
 }
 
 /**

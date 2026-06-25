@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/15 20:21:52 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/22 23:03:01 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <string>
 #include <sys/types.h>
 #include <map>
+#include <stdint.h>
 #include <iostream>
 
 class Vhost
@@ -23,9 +24,9 @@ class Vhost
     private:
         std::string                         _serverName;
         std::string                         _host;
-        std::pair<bool, u_int16_t>          _port;
+        std::pair<bool, uint16_t>          _port;
         std::pair<bool, u_int64_t>          _maxBodySize;
-        std::map<u_int16_t,std::string>     _errorPages;
+        std::map<uint16_t,std::string>     _errorPages;
         std::map<std::string,std::string>   _cgi;
 
         std::vector<Location>               _locations;
@@ -45,9 +46,9 @@ class Vhost
 
         const std::string& getServerName() const                        { return _serverName; }
         const std::string& getHost() const                              { return _host; }
-        const u_int16_t& getPort() const                                { return _port.second; }
+        const uint16_t& getPort() const                                { return _port.second; }
         const u_int64_t& getMaxBodySize() const                         { return _maxBodySize.second; }
-        const std::map<u_int16_t, std::string>& getErrorPages() const   { return _errorPages; }
+        const std::map<uint16_t, std::string>& getErrorPages() const   { return _errorPages; }
         const std::map<std::string, std::string>& getCGI() const        { return _cgi; }
 
         // Setters

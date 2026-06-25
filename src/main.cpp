@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/17 10:31:18 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/24 15:22:10 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,15 +42,23 @@ int main(int argc, char** argv)
         else
             webserver = new Server; // Use default config directory
 
-        webserver->debugServer();
         webserver->parseConf();
+        webserver->verifyConf();
         webserver->debugServer();
         webserver->bindListeningSockets();
         webserver->registerListeningSocketsWithEpoll();
         webserver->startListening();
 
+        int nEvents;
         while (keepRunning)
         {
+            nEvents = webserver->pollEvents();
+            if (nEvents > 0)
+            {
+                webserver->handleIncomingEvents(nEvents);
+                webserver->processPendingRequests();
+                webserver->handleOutgoingEvents(nEvents);
+            }
             usleep(100000);
         }
 

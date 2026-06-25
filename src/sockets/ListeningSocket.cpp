@@ -15,12 +15,14 @@
 #include <arpa/inet.h>
 #include <exception>
 #include <iostream>
+#include <stdint.h>
 #include <cstring>
-#include <fcntl.h>
 
-ListeningSocket::ListeningSocket(std::string host, u_int16_t port)
-	: _socketFd(-1), _port(port), _hostStr(host), _hostNum(0)
+ListeningSocket::ListeningSocket(std::string host, uint16_t port)
+	: _port(port), _hostStr(host), _hostNum(0)
 {
+	_socketType = SOCKET_TYPE_LISTEN;
+
 	struct in_addr net_bytes;
 
     if (inet_pton(AF_INET, _hostStr.c_str(), &net_bytes) != 1)
@@ -36,7 +38,7 @@ ListeningSocket::~ListeningSocket()
 
 void ListeningSocket::create()
 {
-	_socketFd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+	_socketFd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
 	if (_socketFd == -1)
 	{
 		throw std::runtime_error("Failed to create socket");
@@ -56,25 +58,6 @@ void ListeningSocket::setReusePort()
 		throw std::runtime_error("Failed to set SO_REUSEPORT");
 	}
 	std::cerr << "[INFO] Socket fd " << _socketFd << " SO_REUSEPORT option set" << std::endl;
-}
-
-void ListeningSocket::setNonBlocking()
-{
-	if (_socketFd == -1)
-	{
-		throw std::runtime_error("Socket not created");
-	}
-	int flags = fcntl(_socketFd, F_GETFL, 0);
-	if (flags == -1)
-	{
-		throw std::runtime_error("Failed to get socket flags");
-	}
-
-	if (fcntl(_socketFd, F_SETFL, flags | O_NONBLOCK) == -1)
-	{
-		throw std::runtime_error("Failed to set non-blocking mode");
-	}
-	std::cerr << "[INFO] Socket fd " << _socketFd << " set to non-blocking mode" << std::endl;
 }
 
 void ListeningSocket::bind()
@@ -107,17 +90,12 @@ void ListeningSocket::listen()
 
 	if (::listen(_socketFd, LISTEN_BACKLOG) == -1)
 	{
-		throw std::runtime_error("Failed to listen on socket" + _socketFd);
+		throw std::runtime_error("Failed to listen on a socket");
 	}
 	std::cerr << "[INFO] Socket fd " << _socketFd << " listening on port " << _port << std::endl;
 }
 
-int ListeningSocket::getSocketFd() const
-{
-	return (_socketFd);
-}
-
-u_int16_t ListeningSocket::getPort() const
+uint16_t ListeningSocket::getPort() const
 {
 	return (_port);
 }
