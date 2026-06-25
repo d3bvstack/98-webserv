@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:40 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 21:03:37 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/25 22:57:22 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,12 +54,16 @@ void ClientConnection::appendReadBuffer(const char* buffer, size_t size)
 
 void ClientConnection::removePendingRequest(Request request)
 {
-    _pendingRequests.erase(std::find(_pendingRequests.begin(), _pendingRequests.end(), request));
+        std::vector<Request>::iterator it = std::find(_pendingRequests.begin(), _pendingRequests.end(), request);
+    if (it != _pendingRequests.end())
+        _pendingRequests.erase(it);
 }
 
 void ClientConnection::removePendingResponse(Response response)
 {
-    _pendingResponses.erase(std::find(_pendingResponses.begin(), _pendingResponses.end(), response));
+    std::vector<Response>::iterator it = std::find(_pendingResponses.begin(), _pendingResponses.end(), response);
+    if (it != _pendingResponses.end())
+        _pendingResponses.erase(it);
 }
 
 const char* ClientConnection::getWriteBuffer() const
