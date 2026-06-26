@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include "Location.hpp"
-#include <string>
-#include <sys/types.h>
-#include <map>
 #include <stdint.h>
-#include <iostream>
+#include <string>
+#include <map>
+#include <utility>
+#include <vector>
+#include "Location.hpp"
 
 class Vhost
 {

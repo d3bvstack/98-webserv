@@ -13,10 +13,11 @@
 #include "ListeningSocket.hpp"
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <exception>
-#include <iostream>
 #include <stdint.h>
+#include <netinet/in.h>
+#include <iostream>
 #include <cstring>
+#include <stdexcept>
 
 ListeningSocket::ListeningSocket(std::string host, uint16_t port)
 	: _port(port), _hostStr(host), _hostNum(0)

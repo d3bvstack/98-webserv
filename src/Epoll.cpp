@@ -11,13 +11,13 @@
 /* ************************************************************************** */
 
 #include "Epoll.hpp"
-
 #include <unistd.h>
 #include <stdexcept>
 #include <iostream>
 #include <cerrno>
 #include <cstring>
 #include <sstream>
+#include <string>
 
 Epoll::Epoll()
     : _epollFd(-1), _events()

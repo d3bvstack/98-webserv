@@ -11,13 +11,21 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include "Request.hpp"
-#include "Response.hpp"
-
 #include <sys/socket.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/epoll.h>
+#include <sys/types.h>
 #include <sstream>
 #include <cstring>
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include "Request.hpp"
+#include "Response.hpp"
+#include "ClientConnection.hpp"
+#include "ListeningSocket.hpp"
+#include "Socket.hpp"
 
 /**
  * @brief Checks if the string `filename` ends with the provided `extension`

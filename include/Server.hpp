@@ -12,20 +12,16 @@
 
 #pragma once
 
-#include "Vhost.hpp"
-#include "ConfigParser.hpp"
-#include "ListeningSocket.hpp"
-#include "ClientConnection.hpp"
-#include "Epoll.hpp"
-#include "Socket.hpp"
-
-
+#include <stdint.h>
 #include <vector>
 #include <string>
-#include <list>
-#include <iostream>
-#include <dirent.h>
-#include <stdint.h>
+#include "Vhost.hpp"
+#include "ConfigParser.hpp"
+#include "Epoll.hpp"
+
+class ClientConnection;
+class ListeningSocket;
+class Socket;
 
 
 #ifndef DEFAULT_CONFIG_DIR

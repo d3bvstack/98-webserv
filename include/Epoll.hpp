@@ -13,6 +13,7 @@
 #pragma once
 
 #include <sys/epoll.h>
+#include <stdint.h>
 
 #ifndef EPOLL_MAX_EVENTS
 # define EPOLL_MAX_EVENTS 1024

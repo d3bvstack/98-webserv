@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <string>
 #include <stdint.h>
-#include <sys/types.h>
+#include <string>
 #include "Socket.hpp"
 
 #ifndef LISTEN_BACKLOG

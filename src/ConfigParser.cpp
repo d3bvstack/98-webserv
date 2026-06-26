@@ -11,12 +11,17 @@
 /* ************************************************************************** */
 
 #include "ConfigParser.hpp"
+#include <stddef.h>
+#include <stdint.h>
+#include <sstream>
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 #include "Server.hpp"
 #include "Vhost.hpp"
 #include "Location.hpp"
-
-
-#include <sstream>
 
 std::string ConfigParser::trimAndStripComments(const std::string& str)
 {

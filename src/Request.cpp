@@ -11,9 +11,13 @@
 /* ************************************************************************** */
 
 #include "Request.hpp"
+#include <stddef.h>
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cctype>
+#include <stdexcept>
+#include <utility>
 
 static std::string trim(const std::string& str)
 {

@@ -11,14 +11,11 @@
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
+#include <stdint.h>
+#include <sys/socket.h>
+#include <algorithm>
 #include "Request.hpp"
 #include "Response.hpp"
-#include "Vhost.hpp"
-
-#include <stdint.h>
-#include <iostream>
-#include <algorithm>
-#include <sys/socket.h>
 
 ClientConnection::ClientConnection(int fd, uint16_t port)
     : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0)

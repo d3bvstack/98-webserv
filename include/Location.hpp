@@ -12,11 +12,10 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <string>
 #include <vector>
-#include <map>
-#include <sys/types.h>
-#include <stdint.h>
+#include <utility>
 
 class Vhost;
 

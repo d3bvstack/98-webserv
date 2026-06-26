@@ -11,10 +11,12 @@
 /* ************************************************************************** */
 
 #include "Vhost.hpp"
+#include <stdint.h>
 #include <vector>
 #include <sstream>
-#include <stdint.h>
 #include <cstdlib>
+#include <iostream>
+#include <stdexcept>
 
 
 Vhost::Vhost()

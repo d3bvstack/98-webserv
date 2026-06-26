@@ -10,13 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <unistd.h>
 #include <cstdlib>
 #include <csignal>
 #include <string>
 #include <sstream>
-
+#include <exception>
+#include <iostream>
 #include "Server.hpp"
-#include "Epoll.hpp"
 
 volatile sig_atomic_t keepRunning = 1;
 volatile sig_atomic_t receivedSignal = 0;

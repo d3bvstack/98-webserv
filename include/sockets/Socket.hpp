@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <sys/types.h>
-
 # define SOCKET_TYPE_LISTEN 0
 # define SOCKET_TYPE_CLIENT 1
 

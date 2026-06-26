@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include "Socket.hpp"
-#include <string>
 #include <stdint.h>
+#include <stddef.h>
+#include <string>
 #include <vector>
+#include "Socket.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
-class Request;
-class Response;
 class Vhost;
 
 class ClientConnection : public Socket

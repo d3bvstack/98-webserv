@@ -14,7 +14,6 @@
 
 #include <string>
 #include <map>
-#include <sys/types.h>
 
 class Request
 {

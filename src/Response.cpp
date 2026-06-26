@@ -11,10 +11,13 @@
 /* ************************************************************************** */
 
 #include "Response.hpp"
-#include "Vhost.hpp"
+#include <stdint.h>
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <iostream>
+#include <utility>
+#include "Vhost.hpp"
 
 Response::Response(int code)
 	: _statusCode(code), _version("HTTP/1.1"), _body("")
