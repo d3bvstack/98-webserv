@@ -6,19 +6,23 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:08:54 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 14:08:22 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Location.hpp"
+#include "Vhost.hpp"
 #include <stdexcept>
 #include <cstdlib>
 #include <iostream>
 #include <stdint.h>
 #include <sstream>
 
-Location::Location()
-    : _autoindex(false), _autoindex_set(false), _max_body_size(0), _max_body_size_set(false)
+Location::Location(const Vhost& currentVhost)
+    : _autoindex(false),
+    _autoindex_set(false),
+    _max_body_size(currentVhost.getMaxBodySize()),
+    _max_body_size_set(false)
 {
 }
 
@@ -110,6 +114,14 @@ void Location::addMethod(const std::string& method)
     _methods.push_back(method);
 }
 
+void Location::verify() const
+{
+    if (!isPathSet())
+        throw std::runtime_error("Missing path");
+    if (!isRootSet() && !isReturnSet())
+        throw std::runtime_error("Missing root path");
+}
+
 void Location::debugLocation() const
 {
     std::cerr << "  [DEBUG] Location:" << std::endl;
@@ -117,15 +129,7 @@ void Location::debugLocation() const
     std::cerr << "    root: " << (_root.empty() ? "(not set)" : _root) << std::endl;
     std::cerr << "    autoindex: " << (_autoindex ? "true" : "false") << std::endl;
     std::cerr << "    upload_store: " << (_upload_store.empty() ? "(not set)" : _upload_store) << std::endl;
-
-    if (_max_body_size_set)
-    {
-        std::cerr << "    max_body_size: " << _max_body_size << std::endl;
-    }
-    else
-    {
-        std::cerr << "    max_body_size: (not set)" << std::endl;
-    }
+    std::cerr << "    max_body_size: " << _max_body_size << std::endl;
 
     if (_defaults.empty())
     {

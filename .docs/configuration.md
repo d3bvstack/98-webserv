@@ -76,7 +76,7 @@ A location block is enclosed within the following tags:
    * Example: `return = 308 /var/www/new/page`
 ### methods (Optional)
 * Defines allowed HTTP methods for the route.
-   * Defaults to only GET if omitted.
+   * Defaults to none.
    * Example: `methods = GET POST DELETE`
 ### autoindex (Optional)
 * Enables or disables directory listing for the location.

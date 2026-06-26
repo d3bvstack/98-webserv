@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:07:04 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:11:24 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 12:54:33 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+class Vhost;
 
 class Location
 {
@@ -34,7 +35,7 @@ class Location
         std::vector<std::string> _methods;
 
     public:
-        Location();
+        Location(const Vhost& currentVhost);
         ~Location();
 
         bool isAutoindexSet() const                                 { return _autoindex_set; }
@@ -51,9 +52,9 @@ class Location
         const std::string& getRoot() const                          { return _root; }
         const std::string& getUploadStore() const                   { return _upload_store; }
         const std::vector<std::string>& getDefaults() const         { return _defaults; }
-        const std::pair<uint16_t, std::string>& getReturn() const  { return _return; }
-        const std::vector<std::string>& getMethods() const { return _methods; }
-        uint64_t getMaxBodySize() const                            { return _max_body_size; }
+        const std::pair<uint16_t, std::string>& getReturn() const   { return _return; }
+        const std::vector<std::string>& getMethods() const          { return _methods; }
+        uint64_t getMaxBodySize() const                             { return _max_body_size; }
 
         void setAutoindex(const std::string& value);
         void setPath(const std::string& path);
@@ -64,6 +65,7 @@ class Location
         void setReturn(const std::string& value);
         void addMethod(const std::string& method);
 
+        void verify() const;
         void debugLocation() const;
 
 };

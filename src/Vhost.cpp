@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:11:24 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 12:26:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,6 +118,16 @@ void Vhost::addCGI(std::string cgi)
 void Vhost::addLocation(Location location)
 {
     _locations.push_back(location);
+}
+
+void Vhost::verify() const
+{
+    if (!isServerNameSet())
+        throw std::runtime_error("Missing server name");
+    if (!isHostSet())
+        throw std::runtime_error("Missing host");
+    if (!isPortSet())
+        throw std::runtime_error("Missing port");
 }
 
 void Vhost::debugVhost() const

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:15:47 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 10:41:49 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,11 +108,12 @@ Server::~Server()
 
 void Server::verifyConf()
 {
-    for (std::vector<Vhost>::iterator it = _vhosts.begin(); it != _vhosts.end(); ++it) {
-
-        for (std::vector<Vhost>::iterator it2 = _vhosts.end() - 1; it2 > it; --it2) {
-
-            if (it->getHost() == it2->getHost() && it->getPort() == it2->getPort()) {
+    for (std::vector<Vhost>::iterator it = _vhosts.begin(); it != _vhosts.end(); ++it)
+    {
+        for (std::vector<Vhost>::iterator it2 = _vhosts.end() - 1; it2 > it; --it2)
+        {
+            if (it->getHost() == it2->getHost() && it->getPort() == it2->getPort())
+            {
 
                 _vhosts.erase(it2);
 

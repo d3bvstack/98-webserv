@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:31:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:32:00 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 12:57:26 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,12 +102,13 @@ void  ConfigParser::parseVhost(Server* server, const std::string& line)
 {
     if (line == "[vhost.end]")
     {
+        _currentVhost.verify();
         server->addVhosts(_currentVhost);
         _state = &ConfigParser::parseGlobal;
     }
     else if (line == "[location.start]")
     {
-        _currentLocation = Location();
+        _currentLocation = Location(_currentVhost);
         ConfigParser::_state = &ConfigParser::parseLocation;
     }
     else
@@ -145,6 +146,7 @@ void ConfigParser::parseLocation(Server* server, const std::string& line)
     (void)server;
     if (line == "[location.end]")
     {
+        _currentLocation.verify();
         _currentVhost.addLocation(_currentLocation);
         _state = &ConfigParser::parseVhost;
     }
@@ -236,4 +238,4 @@ ConfigParser::~ConfigParser()
 // Static member initializations
 ConfigParser::StateFuncPtr ConfigParser::_state = &ConfigParser::parseGlobal;
 Vhost ConfigParser::_currentVhost;
-Location ConfigParser::_currentLocation;
+Location ConfigParser::_currentLocation(_currentVhost);

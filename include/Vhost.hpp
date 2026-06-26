@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:11:24 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 11:46:10 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,9 @@ class Vhost
     private:
         std::string                         _serverName;
         std::string                         _host;
-        std::pair<bool, uint16_t>          _port;
-        std::pair<bool, uint64_t>          _maxBodySize;
-        std::map<uint16_t,std::string>     _errorPages;
+        std::pair<bool, uint16_t>           _port;
+        std::pair<bool, uint64_t>           _maxBodySize;
+        std::map<uint16_t,std::string>      _errorPages;
         std::map<std::string,std::string>   _cgi;
 
         std::vector<Location>               _locations;
@@ -46,9 +46,9 @@ class Vhost
 
         const std::string& getServerName() const                        { return _serverName; }
         const std::string& getHost() const                              { return _host; }
-        uint16_t getPort() const                                { return _port.second; }
-        uint64_t getMaxBodySize() const                         { return _maxBodySize.second; }
-        const std::map<uint16_t, std::string>& getErrorPages() const   { return _errorPages; }
+        uint16_t getPort() const                                        { return _port.second; }
+        uint64_t getMaxBodySize() const                                 { return _maxBodySize.second; }
+        const std::map<uint16_t, std::string>& getErrorPages() const    { return _errorPages; }
         const std::map<std::string, std::string>& getCGI() const        { return _cgi; }
 
         // Setters
@@ -61,6 +61,7 @@ class Vhost
         void addCGI(std::string error_page);
         void addLocation(Location location);
 
+        void verify() const;
         void debugVhost() const;
 
 };
