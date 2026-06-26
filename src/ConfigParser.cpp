@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:31:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 12:57:26 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/26 22:22:32 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,14 +230,6 @@ void ConfigParser::parse(Server* server)
     {
         throw std::runtime_error("[Error] No virtual host configured.");
     }
-}
-
-ConfigParser::ConfigParser()
-{
-}
-
-ConfigParser::~ConfigParser()
-{
 }
 
 // Static member initializations
