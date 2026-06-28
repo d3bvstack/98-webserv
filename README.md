@@ -1,9 +1,14 @@
 *This project has been created as part of the 42 curriculum by*
 
-# 98Webserv
+
+# 98Webserv 
 [![C++](https://img.shields.io/badge/C++-%2300599C.svg?logo=c%2B%2B&logoColor=white)](#)
 
-98Webserv is a handcrafted HTTP server built in C++98. The project covers low-level systems and network programming, focusing on areas such as server configuration parsing, sockets, asynchronous I/O, event polling, TCP/IP and HTTP protocols, request-to-response lifecycles, and CGI execution.
+**98Webserv** is a handcrafted HTTP server built in C++98. The project covers low-level systems and network programming, focusing on areas such as server configuration parsing, sockets, asynchronous I/O, event polling, TCP/IP and HTTP protocols, request-to-response lifecycles, and CGI execution.
+
+<img alt="98webserv cover image" src="https://github.com/user-attachments/assets/d021c065-767b-42c5-ae13-b8b9407b1e5a" />
+
+
 
 ## Table of Contents
 - [Description](#description)
