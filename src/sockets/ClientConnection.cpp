@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:40 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 22:57:22 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/28 20:13:47 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ ClientConnection::~ClientConnection()
 
 void ClientConnection::addPendingRequest(Request request)
 {
-    request.debugRequest();
     _pendingRequests.push_back(request);
 }
 
