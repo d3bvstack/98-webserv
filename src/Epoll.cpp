@@ -40,20 +40,36 @@ Epoll::~Epoll()
     }
 }
 
-void Epoll::addSocket(uint32_t fd)
+void Epoll::addListeningSocket(uint32_t fd)
 {
     epoll_event event;
-    event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP; // EPOLLRDHUP triggers when client closes connection
+    event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
     event.data.fd = fd;
 
     if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
     {
         std::stringstream out;
-        out << "Failed to add socket to epoll: " << errno
+        out << "Failed to add listening socket to epoll: " << errno
             << " - " << strerror(errno) << std::endl;
         throw std::runtime_error(out.str());
     }
-    std::cerr << "[INFO] Socket with fd " << fd << " added to epoll" << std::endl;
+    std::cerr << "[INFO] Listening socket with fd " << fd << " added to epoll" << std::endl;
+}
+
+void Epoll::addClientSocket(uint32_t fd)
+{
+    epoll_event event;
+    event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP;
+    event.data.fd = fd;
+
+    if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
+    {
+        std::stringstream out;
+        out << "Failed to add client socket to epoll: " << errno
+            << " - " << strerror(errno) << std::endl;
+        throw std::runtime_error(out.str());
+    }
+    std::cerr << "[INFO] Client socket with fd " << fd << " added to epoll" << std::endl;
 }
 
 void Epoll::removeSocket(uint32_t fd)

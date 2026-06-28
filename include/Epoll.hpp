@@ -30,7 +30,8 @@ class Epoll
         Epoll();
         ~Epoll();
 
-        void addSocket(uint32_t fd);
+        void addListeningSocket(uint32_t fd);
+        void addClientSocket(uint32_t fd);
         void removeSocket(uint32_t fd);
         int waitWrapper();
 

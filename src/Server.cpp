@@ -197,7 +197,7 @@ void Server::registerListeningSocketsWithEpoll()
     {
         try
         {
-            _epoll.addSocket((*it)->getSocketFd());
+            _epoll.addListeningSocket((*it)->getSocketFd());
             ++registered_n;
         }
         catch(const std::exception& e)
@@ -300,7 +300,7 @@ void Server::acceptNewConnection(Socket* listenSocket)
         }
     }
     _clientConnections.push_back(newClient);
-    _epoll.addSocket(newSocketFd);
+    _epoll.addClientSocket(newSocketFd);
 
     std::cerr << "[INFO] New connection established on fd " << newSocketFd
               << " port: " << port << std::endl;
