@@ -17,7 +17,7 @@
 
 ## Description
 
-98Webserv is an HTTP server written in C++98 that manages concurrent client connections using a single-threaded, event-driven architecture. To handle multiple connections without the resource overhead of multi-threading or process forking, the server utilizes Linux `epoll` to multiplex I/O across sockets.
+**98Webserv** is an HTTP server written in C++98 that manages concurrent client connections using a single-threaded, event-driven architecture. To handle multiple connections without the resource overhead of multi-threading or process forking, the server utilizes Linux `epoll` to multiplex I/O across sockets.
 
 ### Configuration
 
