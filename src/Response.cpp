@@ -97,6 +97,8 @@ std::string Response::codeToReason(int code) const
 		case 400: return "Bad Request";
 		case 403: return "Forbidden";
 		case 404: return "Not Found";
+		case 413: return "Payload Too Large";
+		case 431: return "Request Header Fields Too Large";
 		case 405: return "Method Not Allowed";
 		case 500: return "Internal Server Error";
 		default:  return "Unknown Status";

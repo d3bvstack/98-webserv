@@ -405,6 +405,14 @@ void Server::handleClientIncomingEvent(int clientFd)
     size_t headerEndPos = fullBuffer.find("\r\n\r\n");
     if (headerEndPos == std::string::npos)
     {
+        if (fullBuffer.length() > 8192)
+        {
+            std::cerr << "[ERROR] Request headers exceed maximum size on fd " << clientFd << std::endl;
+            client->removeFromReadBuffer(std::string::npos);
+            Response response = Response::createErrorResponse(431, *(client->getVhost()));
+            client->addPendingResponse(response);
+            return;
+        }
         return;
     }
 
@@ -444,6 +452,16 @@ void Server::handleClientIncomingEvent(int clientFd)
             std::cerr << "[INFO] Complete chunked HTTP request received on fd " << clientFd << std::endl;
 
             std::string unchunkedBody = decodeChunkedBody(body);
+
+            if (unchunkedBody.length() > client->getVhost()->getMaxBodySize())
+            {
+                std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
+                client->removeFromReadBuffer(std::string::npos);
+                Response response = Response::createErrorResponse(413, *(client->getVhost()));
+                client->addPendingResponse(response);
+                return;
+            }
+
             std::string cleanHeaders = headers;
             size_t encodingPos = cleanHeaders.find("Transfer-Encoding: chunked");
             if (encodingPos != std::string::npos)
@@ -462,6 +480,14 @@ void Server::handleClientIncomingEvent(int clientFd)
         }
         else
         {
+            if (body.length() > client->getVhost()->getMaxBodySize() * 2)
+            {
+                std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
+                client->removeFromReadBuffer(std::string::npos);
+                Response response = Response::createErrorResponse(413, *(client->getVhost()));
+                client->addPendingResponse(response);
+                return;
+            }
             std::cerr << "[INFO] Chunked headers received, waiting for final chunk on fd " << clientFd << std::endl;
         }
     }
@@ -473,6 +499,15 @@ void Server::handleClientIncomingEvent(int clientFd)
         {
             std::stringstream sstream(headers.substr(pos + 15)); // 15 for "Content-Length".length()
             sstream >> contentLength;
+        }
+
+        if (static_cast<uint64_t>(contentLength) > client->getVhost()->getMaxBodySize())
+        {
+            std::cerr << "[ERROR] Request body exceeds max body size on fd " << clientFd << std::endl;
+            client->removeFromReadBuffer(std::string::npos);
+            Response response = Response::createErrorResponse(413, *(client->getVhost()));
+            client->addPendingResponse(response);
+            return;
         }
 
         if (body.length() >= static_cast<size_t>(contentLength))
