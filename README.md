@@ -8,19 +8,93 @@
 - [Resources](#resources)
 
 ## Description
-This project is an implementation of an HTTP server in the C++98 standard. The webserver is implemented to either accept files specified as arguments when running the executable, or if no arguments provided, it searches the default configurations directory ".conf/" and treats, every .conf file as a configurations file. A single configuration file can define a single or multiple vhosts [`include/Vhost.hpp`](include/Vhost.hpp).  The application uses the configuration file to define virtual hosts, per-vhost limits, URL routing rules, etc. The webserver parses the configuration files for correct syntax and required fields, when a configuration is not valid it doesn't invalidate other vhost configurations. For a configuration file to be considered valid, it must follow the rules and syntax outlined in [`.docs/configuration`](.docs/configuration.md).
-Once the vhosts and locations are parsed, the server creates listenning sockets bound to the interfaces defined in the respective configurations of each vhost. These listenning sockets are added to an epoll instance that polls for events on the associated file descriptors, when a connection request happens, the server accepts it, creates a ClientConncection object for comunication with client and adds the new file descriptor to the epoll instance to poll for EPOLLIN/EPOLLOUT events as well as errors/closing conection.
-Epoll indicated event both on listenning sockets and client connection, when an event is on clientconnection, if is a read event, the fd is received and saved to a buffer, a check is performed to verify if it is the start of a valid http request, if it is, then checks if the request is complete, if not it saves the buffer for next read event on socket until complete request or max body size reached. If complete request received, create object from raw bytes request and added to the pending requests.
-[Processing requests logic].
-Then the response is converted to raw bits and sent through client connection socket whenever the epoll notifies fd is writable, if message is longer than the sent number of bytes, the remaining buffer is stored for next epoll write event and so on until the complete response is sent and no more responses are queued for sending through the client socket.
+
+Webserv is an HTTP/1.1 server written in C++98 that handles concurrent client connections through a single-threaded, event-driven architecture. Rather than forking or threading per connection, it relies on Linux `epoll` to multiplex I/O across many sockets efficiently.
+
+The server loads configuration from `.conf` files, which may be specified as command-line arguments or discovered automatically in the `.conf/` directory. Each file defines one or more virtual hosts, modelled by the [`Vhost`](include/Vhost.hpp#L22) class, with per-host settings for server name, host, port, maximum body size, custom error pages, and CGI extension mappings. Within each virtual host, [`Location`](include/Location.hpp#L22) blocks define URL routing rules — the path to match, a document root or redirect target, allowed HTTP methods, directory indexing, default index files, and upload directories. Invalid vhosts are rejected individually, so a syntax error in one configuration never invalidates another. The full configuration syntax is documented in the [configuration specification](.docs/configuration.md).
+
+Once parsed, the server creates one listening socket for every unique host:port pair across all vhosts and registers all of them with a single [`Epoll`](include/Epoll.hpp#L22) instance. The event loop — driven by [`Epoll::waitWrapper`](src/Epoll.cpp#L72) — dispatches every I/O event in turn. When a listening socket becomes readable, the server accepts the connection and wraps it in a [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) object, which is then registered for `EPOLLIN` and `EPOLLOUT` notifications. On client sockets, incoming data accumulates in a per-connection buffer. The server validates that the data starts with a well-formed HTTP request and, when the request is complete, constructs a [`Request`](include/Request.hpp#L18) object and queues it for processing via [`Server::processPendingRequests`](src/Server.cpp#L618). If the reques is either incorrectly formatted or body size is larger than `max_body_size` a [`Response`](include/Response.hpp#L22) is constructed and queued for sending to client.
+
+[Processing requests logic]
+
+After processing, the [`Response`](include/Response.hpp#L22) is serialized and written back to the client whenever `epoll` signals that the socket is writable. If the response is too large to send in a single call, the unwritten portion is retained in a buffer and transmission resumes on the next `EPOLLOUT` event. This cycle repeats until the entire response has been delivered and no further responses are queued for that connection.
+
 [CGI logic]
 
 ## Instructions
-To build the executable a makefile is provided with targets `make webserv` and `make`, these will create the executable on bin/ direcctory.
-To run, the makefile provides target `make run` (also recompiles if any file changed from last make), although can be executed by running `./bin/webserv` from root directory.
-Program can be executed with or without arguments, it will either use arguments as paths to config files to use or if no arguments it will use the ones it finds on default directory.
-Once the server logs output that it is listenning on the ports, you can connect to server.
-[Instructions for connecting with both browser or telnet]
+
+### Prerequisites
+
+A C++98-capable compiler (`c++`), `make`, and a Linux environment with `epoll` support.
+
+### 1. Build
+
+```sh
+make
+```
+
+Or as an explicit target:
+
+```sh
+make webserv
+```
+
+The binary is placed at `bin/webserv`.
+
+### 2. Run
+
+Start the server with default configs (loads all `.conf` files from the `.conf/` directory):
+
+```sh
+make run
+```
+
+Or specify one or more configuration files explicitly:
+
+```sh
+make run path/to/config1.conf path/to/config2.conf
+```
+
+The path to the binary also works:
+
+```sh
+./bin/webserv
+```
+
+### 3. Connect
+
+Once the server logs that it is listening, open a browser and navigate to:
+
+```
+http://<host>:<port>
+```
+
+For example, if the server listens on `127.0.0.1:8080`:
+
+```
+http://localhost:8080
+```
+
+Alternatively, connect via telnet and send a raw HTTP request:
+
+```sh
+telnet localhost 8080
+```
+
+Then paste the following (end with a blank line):
+
+```
+GET / HTTP/1.1
+Host: localhost
+
+```
+
+### 4. Clean
+
+```sh
+make clean      # Remove object files
+make fclean     # Remove object files and the binary
+```
 
 ## Resources
 
