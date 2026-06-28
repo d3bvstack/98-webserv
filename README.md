@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by*
+*This project has been created as part of the 42 curriculum by **dbarba-v** ([**d3bvstack** on github.com](https://github.com/d3bvstack/))*
 
 
 # 98Webserv 
