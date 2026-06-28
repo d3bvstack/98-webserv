@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:32:46 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/28 10:54:51 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@ Response::Response(int code)
 {
 	_reason = codeToReason(code);
 	_headers["Content-Length"] = "0";
+	_headers["Server"] = "98Webserv";
+	
 }
 
 Response::~Response()
