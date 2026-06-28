@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include <string>
 #include <vector>
+#include <ctime>
 #include "Socket.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
@@ -30,6 +31,7 @@ class ClientConnection : public Socket
         std::string             _readBuffer;
         std::string             _writePendingBuffer;
         size_t                  _writePendingOffset;
+        time_t                  _lastActivity;
         std::vector<Request>    _pendingRequests;
         std::vector<Response>   _pendingResponses;
 
@@ -56,4 +58,8 @@ class ClientConnection : public Socket
         void removeFromReadBuffer(size_t n);
 
         void sendWritePendingBuffer();
+
+        void updateActivity();
+        bool isIdle(time_t timeoutSec) const;
+        time_t getLastActivity() const;
 };

@@ -299,6 +299,7 @@ void Server::acceptNewConnection(Socket* listenSocket)
             break;
         }
     }
+    newClient->updateActivity();
     _clientConnections.push_back(newClient);
     _epoll.addClientSocket(newSocketFd);
 
@@ -399,6 +400,7 @@ void Server::handleClientIncomingEvent(int clientFd)
         return;
     }
 
+    client->updateActivity();
     client->appendReadBuffer(buffer, bytesRead);
     const std::string& fullBuffer = client->getReadBuffer();
 
@@ -622,6 +624,7 @@ void Server::handleClientOutgoingEvent(int clientFd)
     {
         client->sendWritePendingBuffer();
     }
+    client->updateActivity();
 }
 
 void Server::handleOutgoingEvents(int activeEventsCount)
@@ -656,6 +659,23 @@ void Server::processPendingRequests()
     // This method would iterate through _clientConnections
     // and process each pending request in _requests queue
     // Generate responses and push to _responses queue
+}
+
+void Server::checkIdleTimeouts()
+{
+    std::vector<int> idleFds;
+    for (std::vector<ClientConnection*>::const_iterator it = _clientConnections.begin();
+         it != _clientConnections.end(); ++it)
+    {
+        ClientConnection* client = *it;
+        if (client->getVhost() == NULL)
+            continue;
+        time_t timeout = static_cast<time_t>(client->getVhost()->getTimeout());
+        if (client->isIdle(timeout) && client->getWriteBuffer() == NULL)
+            idleFds.push_back(client->getSocketFd());
+    }
+    for (std::vector<int>::const_iterator it = idleFds.begin(); it != idleFds.end(); ++it)
+        disconnectClient(*it);
 }
 
 /**

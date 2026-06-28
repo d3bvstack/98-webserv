@@ -65,6 +65,7 @@ class Server
         void handleIncomingEvents(int nEvents);
         void handleOutgoingEvents(int nEvents);
         void processPendingRequests();
+        void checkIdleTimeouts();
 
 
         void debugServer() const;

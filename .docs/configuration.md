@@ -42,6 +42,10 @@ A virtual host is defined between the following tags:
 * Defines the maximum client request size in bytes.
    * Defaults to 1MB (1048576) if omitted.
    * Example: `max_body_size = 1048576`
+### `keep_alive_timeout` (Optional)
+* Defines the maximum idle time in seconds before a keep-alive connection is closed by the server.
+   * Defaults to `60` seconds if omitted.
+   * Example: `keep_alive_timeout = 30`
 ### `error_page` (Optional)
 * Maps an HTTP error code to a custom HTML file path.
    * Example: `error_page = 404 /path/to/error/page`

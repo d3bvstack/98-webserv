@@ -24,6 +24,7 @@ Vhost::Vhost()
     _host(""),
     _port(false, 0),
     _maxBodySize(false, 1024 *1024),
+    _timeout(false, 60),
     _errorPages(),
     _cgi()
 {}
@@ -77,6 +78,15 @@ void Vhost::setMaxBodySize(uint64_t size)
         throw std::logic_error("Max body size is already set.");
     }
     _maxBodySize = std::make_pair(true, size);
+}
+
+void Vhost::setTimeout(uint64_t seconds)
+{
+    if (isTimeoutSet())
+    {
+        throw std::logic_error("Timeout is already set.");
+    }
+    _timeout = std::make_pair(true, seconds);
 }
 
 static std::vector<std::string> splitBySpace(const std::string& input)
@@ -155,6 +165,12 @@ void Vhost::debugVhost() const
         std::cerr << getMaxBodySize() << " bytes" << std::endl;
     else
         std::cerr << "NOT SET" << std::endl;
+
+    std::cerr << "  KeepAliveTimeout: ";
+    if (isTimeoutSet())
+        std::cerr << getTimeout() << " seconds" << std::endl;
+    else
+        std::cerr << "60 seconds" << std::endl;
 
     std::cerr << "  Error Pages: ";
     if (isErrorPagesSet())

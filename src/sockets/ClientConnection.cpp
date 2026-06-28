@@ -18,7 +18,7 @@
 #include "Response.hpp"
 
 ClientConnection::ClientConnection(int fd, uint16_t port)
-    : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0)
+    : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0), _lastActivity(time(NULL))
 {
     _socketFd = fd;
     _socketType = SOCKET_TYPE_CLIENT;
@@ -101,4 +101,19 @@ void ClientConnection::removeFromReadBuffer(size_t n)
     {
         _readBuffer.erase(0, n);
     }
+}
+
+void ClientConnection::updateActivity()
+{
+    _lastActivity = time(NULL);
+}
+
+bool ClientConnection::isIdle(time_t timeoutSec) const
+{
+    return (time(NULL) - _lastActivity > timeoutSec);
+}
+
+time_t ClientConnection::getLastActivity() const
+{
+    return (_lastActivity);
 }

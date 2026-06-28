@@ -126,6 +126,7 @@ void  ConfigParser::parseVhost(Server* server, const std::string& line)
         else if (key == "listen") _currentVhost.setPort(stringToNum<uint32_t>(value));
         else if (key == "server_name") _currentVhost.setServerName(value);
         else if (key == "max_body_size") _currentVhost.setMaxBodySize(stringToNum<uint64_t>(value));
+        else if (key == "keep_alive_timeout") _currentVhost.setTimeout(stringToNum<uint64_t>(value));
         else if (key == "error_page") _currentVhost.addErrorPages(value);
         else if (key == "cgi") _currentVhost.addCGI(value);
         else

@@ -60,6 +60,7 @@ int main(int argc, char** argv)
                 webserver->processPendingRequests();
                 webserver->handleOutgoingEvents(nEvents);
             }
+            webserver->checkIdleTimeouts();
             usleep(100000);
         }
 
