@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 14:11:51 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:32:59 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/28 19:11:04 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Request::Request(const std::string& rawRequest)
 {
     size_t headerEndPos = rawRequest.find("\r\n\r\n");
 
-    std::string headerPart = rawRequest.substr(0, headerEndPos);
+    std::string headerPart = rawRequest.substr(0, headerEndPos + 2);
     _body = rawRequest.substr(headerEndPos + 4); // skip the \r\n\r\n [1]
 
     std::stringstream sstream(headerPart);
@@ -127,7 +127,12 @@ Request::~Request()
 
 bool Request::operator==(const Request& other) const
 {
-    return this == &other;
+    return (_method == other._method
+        && _path == other._path
+        && _version == other._version
+        && _query_string == other._query_string
+        && _headers == other._headers
+        && _body == other._body);
 }
 
 void Request::debugRequest() const

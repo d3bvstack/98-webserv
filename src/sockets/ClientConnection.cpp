@@ -56,7 +56,7 @@ void ClientConnection::removePendingRequest(Request request)
         _pendingRequests.erase(it);
 }
 
-void ClientConnection::removePendingResponse(Response response)
+void ClientConnection::removePendingResponse(const Response& response)
 {
     std::vector<Response>::iterator it = std::find(_pendingResponses.begin(), _pendingResponses.end(), response);
     if (it != _pendingResponses.end())

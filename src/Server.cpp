@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 10:41:49 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/28 19:12:55 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -475,6 +475,7 @@ void Server::handleClientIncomingEvent(int clientFd)
 
             std::string reconstructedRequest = cleanHeaders + "\r\n\r\n" + unchunkedBody;
             Request request(reconstructedRequest);
+            request.debugRequest();
             client->addPendingRequest(request);
 
             size_t chunkEndPos = body.find("0\r\n\r\n");
@@ -518,6 +519,7 @@ void Server::handleClientIncomingEvent(int clientFd)
             try
             {
                 Request request(client->getReadBuffer());
+                request.debugRequest();
                 client->addPendingRequest(request);
             }
             catch(const std::exception& e)
@@ -538,6 +540,7 @@ void Server::handleClientIncomingEvent(int clientFd)
         try
         {
             Request request(client->getReadBuffer());
+            request.debugRequest();
             client->addPendingRequest(request);
             client->removeFromReadBuffer(headerEndPos + 4);
         }

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/28 10:54:51 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/28 19:10:48 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,11 @@ Response::~Response()
 
 bool Response::operator==(const Response& other) const
 {
-    return this == &other;
+    return (_statusCode == other._statusCode
+        && _reason == other._reason
+        && _version == other._version
+        && _headers == other._headers
+        && _body == other._body);
 }
 
 static std::string readFileToString(const std::string& filePath)

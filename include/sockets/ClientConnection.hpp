@@ -49,7 +49,7 @@ class ClientConnection : public Socket
         void addPendingRequest(Request request);
         void addPendingResponse(Response response);
         void removePendingRequest(Request request);
-        void removePendingResponse(Response response);
+        void removePendingResponse(const Response& response);
 
         void setVhost(Vhost* vhost);
         void setWritePendingBuffer(const Response& response);
