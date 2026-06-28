@@ -1,6 +1,9 @@
 *This project has been created as part of the 42 curriculum by*
 
-# Webserv
+# 98Webserv
+[![C++](https://img.shields.io/badge/C++-%2300599C.svg?logo=c%2B%2B&logoColor=white)](#)
+
+98Webserv is a handcrafted HTTP server built in C++98. The project covers low-level systems and network programming, focusing on areas such as server configuration parsing, sockets, asynchronous I/O, event polling, TCP/IP and HTTP protocols, request-to-response lifecycles, and CGI execution.
 
 ## Table of Contents
 - [Description](#description)
@@ -9,23 +12,45 @@
 
 ## Description
 
-Webserv is an HTTP/1.1 server written in C++98 that handles concurrent client connections through a single-threaded, event-driven architecture. Rather than forking or threading per connection, it relies on Linux `epoll` to multiplex I/O across many sockets efficiently.
+98Webserv is an HTTP server written in C++98 that manages concurrent client connections using a single-threaded, event-driven architecture. To handle multiple connections without the resource overhead of multi-threading or process forking, the server utilizes Linux `epoll` to multiplex I/O across sockets.
 
-The server loads configuration from `.conf` files, which may be specified as command-line arguments or discovered automatically in the `.conf/` directory. Each file defines one or more virtual hosts, modelled by the [`Vhost`](include/Vhost.hpp#L22) class, with per-host settings for server name, host, port, maximum body size, custom error pages, and CGI extension mappings. Within each virtual host, [`Location`](include/Location.hpp#L22) blocks define URL routing rules — the path to match, a document root or redirect target, allowed HTTP methods, directory indexing, default index files, and upload directories. Invalid vhosts are rejected individually, so a syntax error in one configuration never invalidates another. The full configuration syntax is documented in the [configuration specification](.docs/configuration.md).
+### Configuration
 
-Once parsed, the server creates one listening socket for every unique host:port pair across all vhosts and registers all of them with a single [`Epoll`](include/Epoll.hpp#L22) instance. The event loop — driven by [`Epoll::waitWrapper`](src/Epoll.cpp#L72) — dispatches every I/O event in turn. When a listening socket becomes readable, the server accepts the connection and wraps it in a [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) object, which is then registered for `EPOLLIN` and `EPOLLOUT` notifications. On client sockets, incoming data accumulates in a per-connection buffer. The server validates that the data starts with a well-formed HTTP request and, when the request is complete, constructs a [`Request`](include/Request.hpp#L18) object and queues it for processing via [`Server::processPendingRequests`](src/Server.cpp#L618). If the request is either incorrectly formatted or body size is larger than `max_body_size` a [`Response`](include/Response.hpp#L22) is constructed and queued for sending to client. The server enforces an 8 KB limit on total header size (responding with 431 Request Header Fields Too Large) and rejects request bodies that exceed the configured `max_body_size` (responding with 413 Payload Too Large). These checks happen while data is still being read from the socket, so oversized requests are rejected before the full body is buffered.
+The server loads ini-like configuration files (`.conf`), which can be passed as command-line arguments or automatically detected within the `.conf/` directory. A single configuration file can declare one or multiple vhosts.
+
+*   **Virtual Hosts:** Modeled by the [`Vhost`](include/Vhost.hpp#L22) class, virtual hosts define settings such as server name, host, port, maximum body size, custom error pages, and CGI extension mappings. Syntax errors within a virtual host block are isolated, meaning an invalid host configuration is rejected individually without preventing other valid hosts from loading.
+*   **Routing Rules:** Within each virtual host, [`Location`](include/Location.hpp#L22) blocks define URL routing rules. These specify the matching path, a document root or redirection target, permitted HTTP methods, directory indexing, default index files, and upload directories.
+
+The full configuration syntax is documented in the [configuration specification](.docs/configuration.md).
+
+### Connection Management and Event Loop
+
+During initialization, the server creates a listening socket for each unique host-port pair defined in the configuration and registers them with a single [`Epoll`](include/Epoll.hpp#L22) instance. 
+
+The core event loop, driven by [`Epoll::waitWrapper`](src/Epoll.cpp#L72), dispatches I/O events as they occur:
+
+1.  **New Connections:** When a listening socket detects an incoming connection, the server accepts it and wraps it in a [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) object. This connection is then registered with `epoll` for both `EPOLLIN` and `EPOLLOUT` notifications.
+2.  **Request Parsing and Validation:** Incoming data accumulates in a buffer dedicated to that connection. The server verifies that the data begins with a valid HTTP request header.
+    *   **Header Limits:** The server enforces an 8 KB limit on the total header size. If exceeded, it responds with `431 Request Header Fields Too Large`.
+    *   **Body Limits:** The server rejects request bodies that exceed the virtual host's configured `max_body_size` with a `413 Payload Too Large` status. 
+    *   These checks are performed progressively while data is being read from the socket, allowing the server to reject oversized requests before buffering the entire payload.
+3.  **Queueing:** Once a request is successfully received and parsed, the server instantiates a [`Request`](include/Request.hpp#L18) object and queues it for handling via [`Server::processPendingRequests`](src/Server.cpp#L618). If validation fails early, an error [`Response`](include/Response.hpp#L22) is generated and queued directly for transmission.
 
 [Processing requests logic]
-
-After processing, the [`Response`](include/Response.hpp#L22) is serialized and written back to the client whenever `epoll` signals that the socket is writable. If the response is too large to send in a single call, the unwritten portion is retained in a buffer and transmission resumes on the next `EPOLLOUT` event. This cycle repeats until the entire response has been delivered and no further responses are queued for that connection.
-
 [CGI logic]
+
+### Response Transmission
+
+Once processed, the [`Response`](include/Response.hpp#L22) is serialized and written back to the client socket when `epoll` signals that the socket is writable (`EPOLLOUT`). 
+
+*   **Non-blocking Transmission:** If a response is too large to write in a single system call, the remaining unsent data is retained in a buffer. Transmission resumes upon the next `EPOLLOUT` event.
+*   **Completion:** This cycle repeats until all queued responses for the connection have been fully transmitted.
 
 ## Instructions
 
 ### Prerequisites
 
-A C++98-capable compiler (`c++`), `make`, and a Linux environment with `epoll` support.
+A C++98 compiler (`c++`), `make`, and a Linux environment with `epoll` support.
 
 ### 1. Build
 
