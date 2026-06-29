@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/29 17:48:14 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 00:43:52 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -657,58 +657,87 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 
 void Server::processPendingRequests()
 {
-    // Iterate throught Client connections
-    // if client connection has pending requests
-    // {
-    //     match request with a location configuration
-    //     if request body > location max body size
-    //     {
-    //         build error 413 and add to pending responses
-    //         remove current request from _pendingRequests
-    //     }
-    //     if method is not allowed on location
-    //     {
-    //         build error 405 and add to pending responses
-    //         remove current request from _pendingRequests
-    //     }
-    //     substitute path match with location root directory
-    //     if new path does not exist
-    //     {
-    //         remove current request from _pendingRequests
-    //         build error 404 and add to pending responses
-    //     }
-    //     if path is a directory
-    //     {
-    //         if defaults defined for location
-    //         {
-    //             while vector of defaults (iterate through defaults)
-    //             {
-    //                 if file on defaults vector not found
-    //                 {
+    /*
+        for each client connection {
+            create copy of clientConnection._pendingRequests // So removing pending request doesn't affect loop iteration
+            for each pending request on copy {
 
-    //                     else
-    //                     {
-    //                         build error 404 and add to pending responses
-    //                         remove current request from _pendingRequests
-    //                     }
-    //                 }
-    //                 else if a file from default vector found
-    //                 {
-    //                     if file is of CGI mapped extension
-    //                     {
-    //                         create environment variables from query string and request headers
-    //                         create new process and pass new environment
+                Location locationMatch = ClientConnection.getMatchLocationFromRequest(Request)
 
-    //                     }
-    //                 }
-    //             }
-    //             if none default found
-    //             {
-    //             }
+                if (request.getBodySize() > locationMatch.getMaxBodySize()) {
+                    build error 413
+                    add error to pending responses
+                    remove current request from _pendingRequests
+                    continue
+                }
 
-    //         }
-    //     }
-    // }
+                if (request.getMethod() != locationMatch.getAllowedMethods()) {
+                    build error 405
+                    add error to pending responses
+                    remove current request from _pendingRequests
+                    continue
+                }
+
+                if (request.getPath() ends with cgi extension) {
+                    processCgiRequest(request, clientConnection)
+                    // TODO
+                }
+                
+                resourcePath = substitute path match with root
+                if (resourcePath.exist() == false) {
+                    build error 404
+                    add error to pending responses
+                    remove current request from _pendingRequests
+                    continue
+                }
+                
+                if (resourcePath.isDirectory()) {
+                    for each default file in location {
+                        if (currentDefault.exists()) {
+                            // Check what to do when type doesn't match type requested
+                            build response with file content as body
+                            add response to pending responses
+                            remove current request from _pendingRequests
+                            break and iterate to next pending request
+                        }
+                        else {
+                            continue
+                        }
+                    }
+                    if (autoindex == true) {
+                        build response with generated index as body
+                        add response to pending responses
+                        remove current request from _pendingRequests
+                        continue
+                    }
+                    else {
+                        build error response 404
+                        add response to pending responses
+                        remove current request from _pendingRequests
+                        continue
+                    }
+                    
+                }
+                else {
+                    if (path.exists()) {
+                        // Check what to do when type doesn't match type requested
+                        build response with file content as body
+                        add response to pending responses
+                        remove current request from _pendingRequests
+                        continue
+                    }
+                    else {
+                        build error response 404
+                        add response to pending responses
+                        remove current request from _pendingRequests
+                        continue
+                    }
+                }
+                
+            }
+        }
+    */
+
 }
 
 void Server::checkIdleTimeouts()
