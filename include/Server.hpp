@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/24 16:37:41 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/29 10:55:36 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,10 @@ class Socket;
 class Server
 {
     private:
-        std::vector<std::string>        _configurationFiles;
-        std::vector<Vhost>              _vhosts; // Maybe change to map<port, vector<Vhosts>>
+        std::vector<std::string>         _configurationFiles;
+        std::vector<Vhost>               _vhosts; // Maybe change to map<port, vector<Vhosts>>
         std::vector<ListeningSocket*>    _listeningSockets; // maybe change to map<socketFd, ListeningSocket>
-        std::vector<ClientConnection*>     _clientConnections;
+        std::vector<ClientConnection*>   _clientConnections;
 
         Epoll                           _epoll;
 
@@ -66,7 +66,6 @@ class Server
         void handleOutgoingEvents(int nEvents);
         void processPendingRequests();
         void checkIdleTimeouts();
-
 
         void debugServer() const;
 };

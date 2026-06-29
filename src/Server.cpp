@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/28 19:12:55 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/29 17:48:14 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -403,7 +403,6 @@ void Server::handleClientIncomingEvent(int clientFd)
     client->updateActivity();
     client->appendReadBuffer(buffer, bytesRead);
     const std::string& fullBuffer = client->getReadBuffer();
-
     size_t headerEndPos = fullBuffer.find("\r\n\r\n");
     if (headerEndPos == std::string::npos)
     {
@@ -658,10 +657,58 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 
 void Server::processPendingRequests()
 {
-    // Process pending requests from all client connections
-    // This method would iterate through _clientConnections
-    // and process each pending request in _requests queue
-    // Generate responses and push to _responses queue
+    // Iterate throught Client connections
+    // if client connection has pending requests
+    // {
+    //     match request with a location configuration
+    //     if request body > location max body size
+    //     {
+    //         build error 413 and add to pending responses
+    //         remove current request from _pendingRequests
+    //     }
+    //     if method is not allowed on location
+    //     {
+    //         build error 405 and add to pending responses
+    //         remove current request from _pendingRequests
+    //     }
+    //     substitute path match with location root directory
+    //     if new path does not exist
+    //     {
+    //         remove current request from _pendingRequests
+    //         build error 404 and add to pending responses
+    //     }
+    //     if path is a directory
+    //     {
+    //         if defaults defined for location
+    //         {
+    //             while vector of defaults (iterate through defaults)
+    //             {
+    //                 if file on defaults vector not found
+    //                 {
+
+    //                     else
+    //                     {
+    //                         build error 404 and add to pending responses
+    //                         remove current request from _pendingRequests
+    //                     }
+    //                 }
+    //                 else if a file from default vector found
+    //                 {
+    //                     if file is of CGI mapped extension
+    //                     {
+    //                         create environment variables from query string and request headers
+    //                         create new process and pass new environment
+
+    //                     }
+    //                 }
+    //             }
+    //             if none default found
+    //             {
+    //             }
+
+    //         }
+    //     }
+    // }
 }
 
 void Server::checkIdleTimeouts()
