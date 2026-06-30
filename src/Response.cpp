@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/28 19:10:48 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:01:27 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,19 @@ void Response::setBody(const std::string& body)
 void Response::setAllowedMethods(const std::vector<std::string>& allowedMethods)
 {
     _headers["Allow"] = methodsToString(allowedMethods);
+}
+
+void Response::setConnectionClose()
+{
+    _headers["Connection"] = "close";
+}
+
+void Response::setConnectionKeepAlive(uint64_t timeout)
+{
+    _headers["Connection"] = "keep-alive";
+    std::stringstream sstream;
+    sstream << "timeout=" << timeout;
+    _headers["Keep-Alive"] = sstream.str();
 }
 
 std::string Response::codeToReason(int code) const

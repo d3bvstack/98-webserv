@@ -6,13 +6,14 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 09:52:45 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:06:42 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:01:25 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string>
 #include <map>
 #include <vector>
@@ -43,6 +44,8 @@ class Response
         void setBody(const std::string& body);
         void setHeader(const std::string& key, const std::string& value);
         void setAllowedMethods(const std::vector<std::string>& allowedMethods);
+        void setConnectionClose();
+        void setConnectionKeepAlive(uint64_t timeout);
 
         std::string toString() const;
 

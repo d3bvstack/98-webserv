@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:40 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/28 20:13:47 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:01:26 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include "Response.hpp"
 
 ClientConnection::ClientConnection(int fd, uint16_t port)
-    : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0), _lastActivity(time(NULL))
+    : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0), _lastActivity(time(NULL)), _keepAlive(false)
 {
     _socketFd = fd;
     _socketType = SOCKET_TYPE_CLIENT;
@@ -41,6 +41,16 @@ void ClientConnection::addPendingResponse(Response response)
 void ClientConnection::setVhost(Vhost* vhost)
 {
     _vhost = vhost;
+}
+
+void ClientConnection::setKeepAlive(bool keepAlive)
+{
+    _keepAlive = keepAlive;
+}
+
+bool ClientConnection::getKeepAlive() const
+{
+    return (_keepAlive);
 }
 
 void ClientConnection::appendReadBuffer(const char* buffer, size_t size)

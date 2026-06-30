@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 21:39:59 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:01:28 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include <cstring>
+#include <cctype>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -374,6 +375,35 @@ static std::string decodeChunkedBody(const std::string& body)
 }
 
 
+static bool hasKeepAlive(const std::string& headers)
+{
+    std::string lower;
+    lower.reserve(headers.length());
+    for (size_t i = 0; i < headers.length(); ++i)
+        lower += std::tolower(static_cast<unsigned char>(headers[i]));
+
+    size_t colonPos = lower.find("connection:");
+    if (colonPos == std::string::npos)
+        return (false);
+
+    colonPos += 11;
+    colonPos = lower.find_first_not_of(" \t", colonPos);
+    if (colonPos == std::string::npos)
+        return (false);
+
+    size_t endPos = lower.find("\r\n", colonPos);
+    if (endPos == std::string::npos)
+        endPos = lower.length();
+
+    std::string value = lower.substr(colonPos, endPos - colonPos);
+    size_t lastNonSpace = value.find_last_not_of(" \t");
+    if (lastNonSpace == std::string::npos)
+        return (false);
+    value.erase(lastNonSpace + 1);
+
+    return (value == "keep-alive");
+}
+
 static bool isValidMethod(const std::string& requestStr)
 {
     size_t spacePos = requestStr.find(' ');
@@ -424,6 +454,7 @@ void Server::handleClientIncomingEvent(int clientFd)
             std::cerr << "[ERROR] Request headers exceed maximum size on fd " << clientFd << std::endl;
             client->removeFromReadBuffer(std::string::npos);
             Response response = Response::createErrorResponse(431, *(client->getVhost()));
+            response.setConnectionClose();
             client->addPendingResponse(response);
             return;
         }
@@ -438,9 +469,8 @@ void Server::handleClientIncomingEvent(int clientFd)
         std::cerr << "[ERROR] Invalid HTTP request on fd " << clientFd << std::endl;
         client->removeFromReadBuffer(std::string::npos);
         Response response = Response::createErrorResponse(400, *(client->getVhost()));
+        response.setConnectionClose();
         client->addPendingResponse(response);
-        // client->setDisconnect(true);
-        // set client connection flag to disconnect when message fully written
         return;
     }
 
@@ -452,9 +482,8 @@ void Server::handleClientIncomingEvent(int clientFd)
         std::cerr << "[ERROR] Both Chunked and Content-Length on fd " << clientFd << std::endl;
         client->removeFromReadBuffer(std::string::npos);
         Response response = Response::createErrorResponse(400, *(client->getVhost()));
+        response.setConnectionClose();
         client->addPendingResponse(response);
-        // client->setDisconnect(true);
-        // set client connection flag to disconnect when message fully written
         return;
     }
 
@@ -472,6 +501,7 @@ void Server::handleClientIncomingEvent(int clientFd)
                 std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
                 client->removeFromReadBuffer(std::string::npos);
                 Response response = Response::createErrorResponse(413, *(client->getVhost()));
+                response.setConnectionClose();
                 client->addPendingResponse(response);
                 return;
             }
@@ -489,6 +519,7 @@ void Server::handleClientIncomingEvent(int clientFd)
             Request request(reconstructedRequest);
             request.debugRequest();
             client->addPendingRequest(request);
+            client->setKeepAlive(hasKeepAlive(headers));
 
             size_t chunkEndPos = body.find("0\r\n\r\n");
             client->removeFromReadBuffer(headerEndPos + 4 + chunkEndPos + 5);
@@ -500,6 +531,7 @@ void Server::handleClientIncomingEvent(int clientFd)
                 std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
                 client->removeFromReadBuffer(std::string::npos);
                 Response response = Response::createErrorResponse(413, *(client->getVhost()));
+                response.setConnectionClose();
                 client->addPendingResponse(response);
                 return;
             }
@@ -530,6 +562,7 @@ void Server::handleClientIncomingEvent(int clientFd)
             std::cerr << "[ERROR] Request body exceeds max body size on fd " << clientFd << std::endl;
             client->removeFromReadBuffer(std::string::npos);
             Response response = Response::createErrorResponse(413, *(client->getVhost()));
+            response.setConnectionClose();
             client->addPendingResponse(response);
             return;
         }
@@ -542,6 +575,7 @@ void Server::handleClientIncomingEvent(int clientFd)
                 Request request(client->getReadBuffer());
                 request.debugRequest();
                 client->addPendingRequest(request);
+                client->setKeepAlive(hasKeepAlive(headers));
             }
             catch(const std::exception& e)
             {
@@ -563,6 +597,7 @@ void Server::handleClientIncomingEvent(int clientFd)
             Request request(client->getReadBuffer());
             request.debugRequest();
             client->addPendingRequest(request);
+            client->setKeepAlive(hasKeepAlive(headers));
             client->removeFromReadBuffer(headerEndPos + 4);
         }
         catch(const std::exception& e)
@@ -571,9 +606,8 @@ void Server::handleClientIncomingEvent(int clientFd)
 
             client->removeFromReadBuffer(std::string::npos);
             Response response = Response::createErrorResponse(400, *(client->getVhost()));
+            response.setConnectionClose();
             client->addPendingResponse(response);
-            // client->setDisconnect(true);
-            // set client connection flag to disconnect when message fully written
         }
     }
 }
@@ -633,11 +667,7 @@ void Server::handleClientOutgoingEvent(int clientFd)
     if (client->getWriteBuffer() == NULL)
     {
         const std::vector<Response>& pending = client->getPendingResponses();
-        if (pending.empty())
-        {
-            return ;
-        }
-        else
+        if (!pending.empty())
         {
             client->setWritePendingBuffer(pending.front());
             client->sendWritePendingBuffer();
@@ -649,6 +679,14 @@ void Server::handleClientOutgoingEvent(int clientFd)
         client->sendWritePendingBuffer();
     }
     client->updateActivity();
+
+    if (client->getWriteBuffer() == NULL
+        && client->getPendingResponses().empty()
+        && client->getPendingRequests().empty()
+        && !client->getKeepAlive())
+    {
+        disconnectClient(clientFd);
+    }
 }
 
 void Server::handleOutgoingEvents(int activeEventsCount)

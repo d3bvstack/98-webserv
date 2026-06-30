@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:43 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/25 21:03:19 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:01:24 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class ClientConnection : public Socket
         std::string             _writePendingBuffer;
         size_t                  _writePendingOffset;
         time_t                  _lastActivity;
+        bool                    _keepAlive;
         std::vector<Request>    _pendingRequests;
         std::vector<Response>   _pendingResponses;
 
@@ -53,6 +54,9 @@ class ClientConnection : public Socket
 
         void setVhost(Vhost* vhost);
         void setWritePendingBuffer(const Response& response);
+
+        void setKeepAlive(bool keepAlive);
+        bool getKeepAlive() const;
 
         void appendReadBuffer(const char* buffer, size_t size);
         void removeFromReadBuffer(size_t n);
