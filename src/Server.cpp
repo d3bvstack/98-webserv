@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:41:04 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:52:28 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -725,7 +725,6 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 void Server::processPendingRequests()
 {
     /*
-        States machine:
         - State 1: iterate through client connections
         - State 2: iterate through pending requests
         - State 3: light request verification
@@ -743,25 +742,31 @@ void Server::processPendingRequests()
             IF client._pendingRequests.empty()
                 CONTINUE
 
-            // Copy pending requests to avoid iteration problems when removing pending requests from original vector
-            FOR EACH request IN copyOfPendingRequests
+            // Erase elements during iteration to avoid iterator invalidation when removing pending requests from original vector
+            FOR EACH it IN client._pendingRequests
+                request = *it
                 location = getMatchingLocation(request)
                 IF validateRequest(request, location, client) FAIL
-                    CONTINUE // Response and pending request removal managed inside validate function
+                    it = client._pendingRequests.erase(it)
+                    CONTINUE
                 IF isCgiRequest() TRUE
                     processCGIRequest(request)
-                    CONTINUE // Response and pending request removal managed inside CGI processing function
+                    it = client._pendingRequests.erase(it)
+                    CONTINUE
                 ELSE
                     requestType = getRequestMethod(request)
                     SWITCH requestType
                         CASE GET
-                            processGETRequest() // Response and pending request removal managed inside function
+                            processGETRequest(request)
+                            it = client._pendingRequests.erase(it)
                             break
                         CASE POST
-                            processPOSTRequest() // Response and pending request removal managed inside function
+                            processPOSTRequest(request)
+                            it = client._pendingRequests.erase(it)
                             break
                         CASE DELETE
-                            processDELETERequest() // Response and pending request removal managed inside function
+                            processDELETERequest(request)
+                            it = client._pendingRequests.erase(it)
                             break
     */
 }
