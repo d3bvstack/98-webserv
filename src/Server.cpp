@@ -686,18 +686,18 @@ void Server::processPendingRequests()
                     CONTINUE // Response and pending request removal managed inside validate function
                 IF isCgiRequest() TRUE
                     processCGIRequest(request)
-                    CONTINUE // Response and pending request removal managed inside CGI processing fucntion
+                    CONTINUE // Response and pending request removal managed inside CGI processing function
                 ELSE
                     requestType = getRequestMethod(request)
                     SWITCH requestType
                         CASE GET
-                            processGETRequest() // Response and pending request removal managed inside fucntion
+                            processGETRequest() // Response and pending request removal managed inside function
                             break
                         CASE POST
-                            processPOSTRequest() // Response and pending request removal managed inside fucntion
+                            processPOSTRequest() // Response and pending request removal managed inside function
                             break
                         CASE DELETE
-                            processDELETERequest() // Response and pending request removal managed inside fucntion
+                            processDELETERequest() // Response and pending request removal managed inside function
                             break
     */
 }

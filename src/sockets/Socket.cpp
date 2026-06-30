@@ -14,25 +14,25 @@
 #include <unistd.h>
 
 Socket::Socket()
-	: _socketFd(-1), _socketType(-1)
+    : _socketFd(-1), _socketType(-1)
 {
 }
 
 Socket::~Socket()
 {
-	if (_socketFd != -1) 
-	{
-		close(_socketFd);
-		_socketFd = -1; 
-	}
+    if (_socketFd != -1) 
+    {
+        close(_socketFd);
+        _socketFd = -1; 
+    }
 }
 
 int Socket::getSocketFd() const
 {
-	return (_socketFd);
+    return (_socketFd);
 }
 
 int Socket::getSocketType() const
 {
-	return (_socketType);
+    return (_socketType);
 }
