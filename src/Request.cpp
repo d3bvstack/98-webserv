@@ -40,7 +40,7 @@ Request::Request(const std::string& rawRequest)
     std::stringstream sstream(headerPart);
     std::string line;
 
-	// Request line
+    // Request line
     if (std::getline(sstream, line))
     {
         if (!line.empty() && line[line.length() - 1] == '\r')
@@ -78,7 +78,7 @@ Request::Request(const std::string& rawRequest)
         }
     }
 
-	// Headers
+    // Headers
     while (std::getline(sstream, line))
     {
         if (!line.empty() && line[line.length() - 1] == '\r')
@@ -133,6 +133,36 @@ bool Request::operator==(const Request& other) const
         && _query_string == other._query_string
         && _headers == other._headers
         && _body == other._body);
+}
+
+const std::string& Request::getMethod() const
+{
+    return (_method);
+}
+
+const std::string& Request::getPath() const
+{
+    return (_path);
+}
+
+const std::string& Request::getVersion() const
+{
+    return (_version);
+}
+
+const std::string& Request::getQueryString() const
+{
+    return (_query_string);
+}
+
+const std::map<std::string, std::string>& Request::getHeaders() const
+{
+    return (_headers);
+}
+
+const std::string& Request::getBody() const
+{
+    return (_body);
 }
 
 void Request::debugRequest() const
