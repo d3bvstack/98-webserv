@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 00:43:52 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 17:55:44 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -384,6 +384,9 @@ static bool isValidMethod(const std::string& requestStr)
 
 void Server::handleClientIncomingEvent(int clientFd)
 {
+    // TODO: use on disk file when body size of both chunked and unchunked requests exceed a certain size
+    // maybe add a member of Request that is a pointer or file descriptor for the asociated file on disk
+
     char buffer[4096];
     ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 
@@ -658,86 +661,45 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 void Server::processPendingRequests()
 {
     /*
-        for each client connection {
-            create copy of clientConnection._pendingRequests // So removing pending request doesn't affect loop iteration
-            for each pending request on copy {
-
-                Location locationMatch = ClientConnection.getMatchLocationFromRequest(Request)
-
-                if (request.getBodySize() > locationMatch.getMaxBodySize()) {
-                    build error 413
-                    add error to pending responses
-                    remove current request from _pendingRequests
-                    continue
-                }
-
-                if (request.getMethod() != locationMatch.getAllowedMethods()) {
-                    build error 405
-                    add error to pending responses
-                    remove current request from _pendingRequests
-                    continue
-                }
-
-                if (request.getPath() ends with cgi extension) {
-                    processCgiRequest(request, clientConnection)
-                    // TODO
-                }
-                
-                resourcePath = substitute path match with root
-                if (resourcePath.exist() == false) {
-                    build error 404
-                    add error to pending responses
-                    remove current request from _pendingRequests
-                    continue
-                }
-                
-                if (resourcePath.isDirectory()) {
-                    for each default file in location {
-                        if (currentDefault.exists()) {
-                            // Check what to do when type doesn't match type requested
-                            build response with file content as body
-                            add response to pending responses
-                            remove current request from _pendingRequests
-                            break and iterate to next pending request
-                        }
-                        else {
-                            continue
-                        }
-                    }
-                    if (autoindex == true) {
-                        build response with generated index as body
-                        add response to pending responses
-                        remove current request from _pendingRequests
-                        continue
-                    }
-                    else {
-                        build error response 404
-                        add response to pending responses
-                        remove current request from _pendingRequests
-                        continue
-                    }
-                    
-                }
-                else {
-                    if (path.exists()) {
-                        // Check what to do when type doesn't match type requested
-                        build response with file content as body
-                        add response to pending responses
-                        remove current request from _pendingRequests
-                        continue
-                    }
-                    else {
-                        build error response 404
-                        add response to pending responses
-                        remove current request from _pendingRequests
-                        continue
-                    }
-                }
-                
-            }
-        }
+        States machine:
+        - State 1: iterate through client connections
+        - State 2: iterate through pending requests
+        - State 3: light request verification
+            3.1 Match location to request
+            3.2 Verify method against allowed methods on location
+            3.3 Verify request body size against location max body size
+            3.4 Determine request type
+        - State 4: process CGI requests
+        - State 5: process non-CGI GET requests
+        - State 6: process non-CGI POST requests
+        - State 7: process non-CGI DELETE requests
     */
+    /*
+        FOR EACH client IN _clientConnections
+            IF client._pendingRequests.empty()
+                CONTINUE
 
+            // Copy pending requests to avoid iteration problems when removing pending requests from original vector
+            FOR EACH request IN copyOfPendingRequests
+                location = getMatchingLocation(request)
+                IF validateRequest(request, location, client) FAIL
+                    CONTINUE // Response and pending request removal managed inside validate function
+                IF isCgiRequest() TRUE
+                    processCGIRequest(request)
+                    CONTINUE // Response and pending request removal managed inside CGI processing fucntion
+                ELSE
+                    requestType = getRequestMethod(request)
+                    SWITCH requestType
+                        CASE GET
+                            processGETRequest() // Response and pending request removal managed inside fucntion
+                            break
+                        CASE POST
+                            processPOSTRequest() // Response and pending request removal managed inside fucntion
+                            break
+                        CASE DELETE
+                            processDELETERequest() // Response and pending request removal managed inside fucntion
+                            break
+    */
 }
 
 void Server::checkIdleTimeouts()
