@@ -33,9 +33,9 @@ void ClientConnection::addPendingRequest(Request request)
     _pendingRequests.push_back(request);
 }
 
-void ClientConnection::addPendingResponse(Response request)
+void ClientConnection::addPendingResponse(Response response)
 {
-    _pendingResponses.push_back(request);
+    _pendingResponses.push_back(response);
 }
 
 void ClientConnection::setVhost(Vhost* vhost)
