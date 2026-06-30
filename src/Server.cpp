@@ -116,14 +116,14 @@ Server::~Server()
 
 void Server::verifyConf()
 {
-    for (std::vector<Vhost>::iterator it = _vhosts.begin(); it != _vhosts.end(); ++it)
+    for (size_t i = 0; i < _vhosts.size(); ++i)
     {
-        for (std::vector<Vhost>::iterator it2 = _vhosts.end() - 1; it2 > it; --it2)
+        for (size_t j = _vhosts.size() - 1; j > i; --j)
         {
-            if (it->getHost() == it2->getHost() && it->getPort() == it2->getPort())
+            if (_vhosts[i].getHost() == _vhosts[j].getHost() && _vhosts[i].getPort() == _vhosts[j].getPort())
             {
 
-                _vhosts.erase(it2);
+                _vhosts.erase(_vhosts.begin() + j);
 
                 std::cerr << "[ERROR] Multiple vhosts on same interface, only first will be used." << std::endl;
             }
