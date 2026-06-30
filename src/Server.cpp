@@ -252,7 +252,6 @@ void Server::disconnectClient(int clientFd)
     std::cerr << "[INFO] Client disconnected on fd " << clientFd << std::endl;
 
     _epoll.removeSocket(clientFd);
-    close(clientFd);
 
     for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
         it != _clientConnections.end(); ++it)
@@ -502,8 +501,17 @@ void Server::handleClientIncomingEvent(int clientFd)
         size_t pos = headers.find("Content-Length:");
         if (pos != std::string::npos)
         {
-            std::stringstream sstream(headers.substr(pos + 15)); // 15 for "Content-Length".length()
-            sstream >> contentLength;
+            pos = headers.find(':', pos);
+            if (pos != std::string::npos)
+            {
+                ++pos;
+                pos = headers.find_first_not_of(" \t\r\n", pos);
+                if (pos != std::string::npos)
+                {
+                    std::stringstream sstream(headers.substr(pos));
+                    sstream >> contentLength;
+                }
+            }
         }
 
         if (static_cast<uint64_t>(contentLength) > client->getVhost()->getMaxBodySize())

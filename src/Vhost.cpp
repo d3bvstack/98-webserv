@@ -111,7 +111,13 @@ void Vhost::addErrorPages(std::string error_page)
         throw std::runtime_error("Wrong format, expected 'error_pages = code path/to/file'");
     }
 
-    uint16_t errorCode = static_cast<uint16_t>(std::atoi(tokens[0].c_str()));
+    char* endptr = NULL;
+    unsigned long parsedCode = std::strtoul(tokens[0].c_str(), &endptr, 10);
+    if (*endptr != '\0')
+    {
+        throw std::runtime_error("Invalid error page code, expected numeric value.");
+    }
+    uint16_t errorCode = static_cast<uint16_t>(parsedCode);
     _errorPages[errorCode] = tokens[1];
 }
 

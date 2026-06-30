@@ -53,6 +53,7 @@ class Vhost
         uint64_t getTimeout() const                                      { return _timeout.second; }
         const std::map<uint16_t, std::string>& getErrorPages() const    { return _errorPages; }
         const std::map<std::string, std::string>& getCGI() const        { return _cgi; }
+        const std::vector<Location>& getLocations() const               { return _locations; }
 
         // Setters
 
