@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:01:27 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:44:02 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,11 @@ void Response::setConnectionClose()
     _headers["Connection"] = "close";
 }
 
+/**
+ * @brief Sets `Connection: keep-alive` with a `Keep-Alive: timeout` header
+ *
+ * @param timeout Idle timeout in seconds
+ */
 void Response::setConnectionKeepAlive(uint64_t timeout)
 {
     _headers["Connection"] = "keep-alive";

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:01:28 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 23:41:04 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -375,6 +375,13 @@ static std::string decodeChunkedBody(const std::string& body)
 }
 
 
+/**
+ * @brief Checks if the request headers contain `Connection: keep-alive`
+ *
+ * @param headers Raw HTTP header block
+ * @return `true` if keep-alive is requested
+ * @return `false` otherwise
+ */
 static bool hasKeepAlive(const std::string& headers)
 {
     std::string lower;
@@ -382,7 +389,7 @@ static bool hasKeepAlive(const std::string& headers)
     for (size_t i = 0; i < headers.length(); ++i)
         lower += std::tolower(static_cast<unsigned char>(headers[i]));
 
-    size_t colonPos = lower.find("connection:");
+    size_t colonPos = lower.find("Connection:");
     if (colonPos == std::string::npos)
         return (false);
 
