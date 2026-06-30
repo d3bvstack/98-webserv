@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 17:55:44 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/06/30 21:39:59 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,15 +160,16 @@ void Server::bindListeningSockets()
     {
         uint16_t port = (*it).getPort();
         std::string host = (*it).getHost();
+        if (isPortAlreadyBound(host, port))
+        {
+            std::cerr << "[INFO] Port " << port << " is already bound, skipping" << std::endl;
+            continue;
+        }
+        std::cerr << "[INFO] Creating server socket on port " << port << std::endl;
+        ListeningSocket *tempSocket = NULL;
         try
         {
-            if (isPortAlreadyBound(host, port))
-            {
-                std::cerr << "[INFO] Port " << port << " is already bound, skipping" << std::endl;
-                continue;
-            }
-            std::cerr << "[INFO] Creating server socket on port " << port << std::endl;
-            ListeningSocket *tempSocket = new ListeningSocket(host, port);
+            tempSocket = new ListeningSocket(host, port);
             tempSocket->create();
             tempSocket->setReusePort();
             tempSocket->bind();
@@ -177,6 +178,7 @@ void Server::bindListeningSockets()
         }
         catch(const std::exception& e)
         {
+            delete tempSocket;
             std::cerr << "[ERROR] Couldn't bind listening socket successfully on port " << port << std::endl;
             std::cerr << "[ERROR] Reason: " << e.what() << std::endl;
         }
@@ -290,20 +292,29 @@ void Server::acceptNewConnection(Socket* listenSocket)
 
 
     ClientConnection* newClient = new ClientConnection(newSocketFd, port);
-    for (size_t i = 0; i < _vhosts.size(); ++i)
+    try
     {
-        if (_vhosts[i].getPort() == port)
+        for (size_t i = 0; i < _vhosts.size(); ++i)
         {
-            newClient->setVhost(&_vhosts[i]);
-            break;
+            if (_vhosts[i].getPort() == port)
+            {
+                newClient->setVhost(&_vhosts[i]);
+                break;
+            }
         }
-    }
-    newClient->updateActivity();
-    _clientConnections.push_back(newClient);
-    _epoll.addClientSocket(newSocketFd);
+        newClient->updateActivity();
+        _clientConnections.push_back(newClient);
+        _epoll.addClientSocket(newSocketFd);
 
-    std::cerr << "[INFO] New connection established on fd " << newSocketFd
-              << " port: " << port << std::endl;
+        std::cerr << "[INFO] New connection established on fd " << newSocketFd
+                  << " port: " << port << std::endl;
+    }
+    catch(const std::exception& e)
+    {
+        delete newClient;
+        std::cerr << "[ERROR] Failed to establish connection on fd " << newSocketFd
+                  << ": " << e.what() << std::endl;
+    }
 }
 
 ClientConnection* Server::clientFromFd(int clientFd)
