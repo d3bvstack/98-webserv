@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:52:28 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/02 15:17:48 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,11 @@ Server::~Server()
     _clientConnections.clear();
 }
 
+/**
+ * @brief Checks that only one vhost per interface is defined,
+ * else mark configurations after first as error
+ *
+ */
 void Server::verifyConf()
 {
     for (size_t i = 0; i < _vhosts.size(); ++i)
@@ -215,6 +220,10 @@ void Server::registerListeningSocketsWithEpoll()
     }
 }
 
+/**
+ * @brief Set all Listening Sockets to begin listening
+ *
+ */
 void Server::startListening()
 {
     for(std::vector<ListeningSocket*>::iterator it = _listeningSockets.begin();
@@ -224,11 +233,22 @@ void Server::startListening()
     }
 }
 
+/**
+ * @brief Call epoll wait() wrapper
+ *
+ * @return int Number of events activated
+ */
 int Server::pollEvents()
 {
     return (_epoll.waitWrapper());
 }
 
+/**
+ * @brief Retrieve Socket instance from a file descriptor
+ *
+ * @param fd
+ * @return Socket*
+ */
 Socket* Server::socketFromFd(int fd)
 {
     for (std::vector<ListeningSocket*>::iterator it = _listeningSockets.begin();
@@ -249,7 +269,11 @@ Socket* Server::socketFromFd(int fd)
     }
     return NULL;
 }
-
+/**
+ * @brief Disconnects a ClientConection identified by its fd
+ *
+ * @param clientFd
+ */
 void Server::disconnectClient(int clientFd)
 {
     std::cerr << "[INFO] Client disconnected on fd " << clientFd << std::endl;
@@ -268,6 +292,12 @@ void Server::disconnectClient(int clientFd)
     }
 }
 
+/**
+ * @brief Accept connections request incomming through a listening socket
+ * and create a client conenction object
+ *
+ * @param listenSocket
+ */
 void Server::acceptNewConnection(Socket* listenSocket)
 {
     int listenFd = listenSocket->getSocketFd();
@@ -280,7 +310,6 @@ void Server::acceptNewConnection(Socket* listenSocket)
     }
 
     uint16_t port = 0;
-    /// Maybe delete Port from client socket and use only poiner to vhost instead
     for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin();
          it != _listeningSockets.end(); ++it)
     {
@@ -318,6 +347,12 @@ void Server::acceptNewConnection(Socket* listenSocket)
     }
 }
 
+/**
+ * @brief Get a client Connection from fd
+ *
+ * @param clientFd
+ * @return ClientConnection*
+ */
 ClientConnection* Server::clientFromFd(int clientFd)
 {
     for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
@@ -331,6 +366,12 @@ ClientConnection* Server::clientFromFd(int clientFd)
     return NULL;
 }
 
+/**
+ * @brief Process a chunk encoded body into a standard unchunked body
+ *
+ * @param body
+ * @return std::string
+ */
 static std::string decodeChunkedBody(const std::string& body)
 {
     std::string decoded;
@@ -411,6 +452,13 @@ static bool hasKeepAlive(const std::string& headers)
     return (value == "keep-alive");
 }
 
+/**
+ * @brief Checks whether or not the method on a request line is a valid HTTP method
+ *
+ * @param requestStr
+ * @return true
+ * @return false
+ */
 static bool isValidMethod(const std::string& requestStr)
 {
     size_t spacePos = requestStr.find(' ');
@@ -429,11 +477,15 @@ static bool isValidMethod(const std::string& requestStr)
             method == "CONNECT");
 }
 
+/**
+ * @brief Logic that handles incoming events from ativated fds tht correspond to client connections.
+ * It handles reading from the fd, storing on buffer, checking general validity of HTTP request structure,
+ * builds a Request object from it and adds to the pending requests queue.
+ *
+ * @param clientFd
+ */
 void Server::handleClientIncomingEvent(int clientFd)
 {
-    // TODO: use on disk file when body size of both chunked and unchunked requests exceed a certain size
-    // maybe add a member of Request that is a pointer or file descriptor for the asociated file on disk
-
     char buffer[4096];
     ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 
@@ -619,6 +671,12 @@ void Server::handleClientIncomingEvent(int clientFd)
     }
 }
 
+/**
+ * @brief Distributes incoming events based on whether they are
+ * from a listening socket or a client connection socket
+ *
+ * @param activeEventsCount number up to which to iterate through the events array
+ */
 void Server::handleIncomingEvents(int activeEventsCount)
 {
     epoll_event* events = _epoll.getEvents();
@@ -662,6 +720,12 @@ void Server::handleIncomingEvents(int activeEventsCount)
     }
 }
 
+/**
+ * @brief Logic that writes to client socket fds the pending responses on client connection
+ * closes connection on innactive connections without keep alive
+ *
+ * @param clientFd
+ */
 void Server::handleClientOutgoingEvent(int clientFd)
 {
     ClientConnection* client = clientFromFd(clientFd);
@@ -769,6 +833,11 @@ void Server::processPendingRequests()
     */
 }
 
+/**
+ * @brief Check Client connections for last time of activity,
+ * disconnects client if idle time larger than established timeout
+ *
+ */
 void Server::checkIdleTimeouts()
 {
     std::vector<int> idleFds;
