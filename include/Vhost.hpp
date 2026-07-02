@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 11:46:10 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/02 10:53:35 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 class Vhost
 {
     private:
-        std::string                         _serverName;
+        std::vector<std::string>            _serverNames;
         std::string                         _host;
         std::pair<bool, uint16_t>           _port;
         std::pair<bool, uint64_t>           _maxBodySize;
@@ -38,7 +38,7 @@ class Vhost
 
         // Getters
 
-        bool isServerNameSet() const    { return !_serverName.empty(); }
+        bool isServerNameSet() const    { return !_serverNames.empty(); }
         bool isHostSet() const          { return !_host.empty(); }
         bool isPortSet() const          { return _port.first; }
         bool isMaxBodySizeSet() const   { return _maxBodySize.first; }
@@ -46,7 +46,7 @@ class Vhost
         bool isErrorPagesSet() const    { return !_errorPages.empty(); }
         bool isCGISet() const           { return !_cgi.empty(); }
 
-        const std::string& getServerName() const                        { return _serverName; }
+        const std::vector<std::string>& getServerNames() const         { return _serverNames; }
         const std::string& getHost() const                              { return _host; }
         uint16_t getPort() const                                        { return _port.second; }
         uint64_t getMaxBodySize() const                                 { return _maxBodySize.second; }
@@ -57,7 +57,7 @@ class Vhost
 
         // Setters
 
-        void setServerName(const std::string& name);
+        void setServerName(const std::string& names);
         void setHost(std::string host);
         void setPort(uint32_t port);
         void setMaxBodySize(uint64_t size);

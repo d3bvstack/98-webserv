@@ -26,7 +26,7 @@ A virtual host is defined between the following tags:
 
 ## Global vhost Settings
 
-### `server_name` (Required)
+### `server_names` (Required)
 * Defines the domains the website responds to.
    * Accepts multiple space-separated values.
    * Example: `server_name = domain.com www.domain.com`

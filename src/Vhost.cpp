@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 12:26:31 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/02 10:53:35 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,21 @@
 #include <iostream>
 #include <stdexcept>
 
+static std::vector<std::string> splitBySpace(const std::string& input)
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::stringstream ss(input);
+
+    while (ss >> token)
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
 
 Vhost::Vhost()
-:   _serverName(""),
+:   _serverNames(),
     _host(""),
     _port(false, 0),
     _maxBodySize(false, 1024 *1024),
@@ -32,17 +44,19 @@ Vhost::Vhost()
 Vhost::~Vhost()
 {}
 
-void Vhost::setServerName(const std::string& name)
+void Vhost::setServerName(const std::string& names)
 {
-    if (isServerNameSet())
-    {
-        throw std::logic_error("Server name is already set.");
-    }
-    if (name.empty())
+    if (names.empty())
     {
         throw std::invalid_argument("Server name cannot be empty.");
     }
-    _serverName = name;
+
+    std::vector<std::string> tokens = splitBySpace(names);
+    for (std::vector<std::string>::const_iterator it = tokens.begin();
+        it != tokens.end(); ++it)
+    {
+        _serverNames.push_back(*it);
+    }
 }
 
 void Vhost::setHost(std::string host)
@@ -87,19 +101,6 @@ void Vhost::setTimeout(uint64_t seconds)
         throw std::logic_error("Timeout is already set.");
     }
     _timeout = std::make_pair(true, seconds);
-}
-
-static std::vector<std::string> splitBySpace(const std::string& input)
-{
-    std::vector<std::string> tokens;
-    std::string token;
-    std::stringstream ss(input);
-
-    while (ss >> token)
-    {
-        tokens.push_back(token);
-    }
-    return tokens;
 }
 
 void Vhost::addErrorPages(std::string error_page)
@@ -150,9 +151,22 @@ void Vhost::verify() const
 
 void Vhost::debugVhost() const
 {
-    std::cerr << "  Server Name: "
-              << (isServerNameSet() ? getServerName() : "NOT SET")
-              << std::endl;
+    std::cerr << "  Server Names: ";
+    if (isServerNameSet())
+    {
+        for (std::vector<std::string>::const_iterator it = _serverNames.begin();
+            it != _serverNames.end(); ++it)
+        {
+            if (it != _serverNames.begin())
+                std::cerr << ", ";
+            std::cerr << *it;
+        }
+    }
+    else
+    {
+        std::cerr << "NOT SET";
+    }
+    std::cerr << std::endl;
 
     std::cerr << "  Host: ";
     if (isHostSet())
