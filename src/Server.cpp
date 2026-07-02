@@ -679,23 +679,21 @@ void Server::handleClientOutgoingEvent(int clientFd)
             client->setWritePendingBuffer(pending.front());
             client->sendWritePendingBuffer();
             client->removePendingResponse(pending.front());
+            client->updateActivity();
         }
     }
     else
     {
         client->sendWritePendingBuffer();
-    }
-    client->updateActivity();
-
-    if (client->getWriteBuffer() == NULL
-        && client->getPendingResponses().empty()
-        && client->getPendingRequests().empty()
-        && !client->getKeepAlive())
-    {
-        disconnectClient(clientFd);
+        client->updateActivity();
     }
 }
 
+/**
+ * @brief Logic that distributes to client outgoing events handler
+ *
+ * @param activeEventsCount
+ */
 void Server::handleOutgoingEvents(int activeEventsCount)
 {
     epoll_event* events = _epoll.getEvents();
