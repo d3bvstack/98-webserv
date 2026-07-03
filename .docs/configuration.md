@@ -31,7 +31,8 @@ A virtual host is defined between the following tags:
    * Accepts multiple space-separated values.
    * Example: `server_name = domain.com www.domain.com`
 ### `host` (Required)
-* Defines the IPv4 address to bind to.
+* Defines the IP address or hostname to bind to.
+   * Accepts hostnames (e.g. `localhost`) and IPv4 addresses.
    * Accepts only one value.
    * Example: `host = 0.0.0.0`
 ### `listen` (Required)

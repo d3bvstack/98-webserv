@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <netinet/in.h>
 #include "Socket.hpp"
 
 #ifndef LISTEN_BACKLOG
@@ -26,6 +27,7 @@ class ListeningSocket : public Socket
         uint16_t _port;
         std::string _hostStr;
         uint32_t _hostNum;
+        struct sockaddr_in _addr;
 
     public:
         ListeningSocket(std::string host, uint16_t port);

@@ -15,8 +15,10 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <iostream>
 #include <cstring>
+#include <sstream>
 #include <stdexcept>
 
 ListeningSocket::ListeningSocket(std::string host, uint16_t port)
@@ -24,13 +26,25 @@ ListeningSocket::ListeningSocket(std::string host, uint16_t port)
 {
 	_socketType = SOCKET_TYPE_LISTEN;
 
-	struct in_addr net_bytes;
+	struct addrinfo hints;
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
 
-    if (inet_pton(AF_INET, _hostStr.c_str(), &net_bytes) != 1)
+	std::ostringstream portStr;
+	portStr << port;
+
+	struct addrinfo* result;
+	int gai_err = getaddrinfo(host.c_str(), portStr.str().c_str(), &hints, &result);
+	if (gai_err != 0)
 	{
-        throw std::runtime_error("Invalid IP address configuration: " + _hostStr);
-    }
-    _hostNum = ntohl(net_bytes.s_addr);
+		throw std::runtime_error(std::string("getaddrinfo: ") + gai_strerror(gai_err));
+	}
+
+	std::memcpy(&_addr, result->ai_addr, result->ai_addrlen);
+	_hostNum = ntohl(_addr.sin_addr.s_addr);
+	freeaddrinfo(result);
 }
 
 ListeningSocket::~ListeningSocket()
@@ -68,14 +82,7 @@ void ListeningSocket::bind()
 		throw std::runtime_error("Socket not created, when trying to bind to port");
 	}
 
-	struct sockaddr_in server_addr;
-	std::memset(&server_addr, 0, sizeof(server_addr));
-
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(_port);
-	server_addr.sin_addr.s_addr = htonl(_hostNum);
-
-	if (::bind(_socketFd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
+	if (::bind(_socketFd, (struct sockaddr*)&_addr, sizeof(_addr)) == -1)
 	{
 		throw std::runtime_error("Failed to bind socket");
 	}
