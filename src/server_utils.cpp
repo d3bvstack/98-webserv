@@ -538,14 +538,17 @@ namespace server_utils
 
     Response buildGetResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
     {
+        // Redirects are handled before touching the filesystem.
         if (location.isReturnSet())
             return (buildRedirectResponse(location, client));
 
+        // Resolve the requested path inside the location root.
         std::string filesystemPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
         if (!pathExists(filesystemPath, &isDirectory))
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
 
+        // If the target is a directory, try default files first.
         if (isDirectory)
         {
             if (location.isDefaultsSet())
@@ -564,10 +567,12 @@ namespace server_utils
                 }
             }
 
+            // If it is still a directory, either list it or reject it.
             if (isDirectory)
             {
                 if (location.getAutoindex())
                 {
+                    // Build a simple HTML index for the directory.
                     std::string listing = buildDirectoryListing(filesystemPath, request.getPath());
                     if (listing.empty())
                         return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
@@ -581,6 +586,7 @@ namespace server_utils
             }
         }
 
+        // Serve the file content with a best-effort content type.
         std::string body = readFileToString(filesystemPath);
         if (body.empty() && !pathExists(filesystemPath, NULL))
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
@@ -593,9 +599,11 @@ namespace server_utils
 
     Response buildPostResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
     {
+        // Redirects win before any body handling.
         if (location.isReturnSet())
             return (buildRedirectResponse(location, client));
 
+        // If an upload folder exists, store the body there as a new file.
         if (location.isUploadStoreSet())
         {
             bool isDirectory = false;
@@ -620,6 +628,7 @@ namespace server_utils
             return (applyConnectionPolicy(response, client));
         }
 
+        // Otherwise, just echo the body back as a basic POST response.
         Response response(200);
         response.setHeader("Content-Type", "text/plain");
         response.setBody(request.getBody());
@@ -628,16 +637,21 @@ namespace server_utils
 
     Response buildDeleteResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
     {
+        // Redirects are handled first, just like in GET and POST.
         if (location.isReturnSet())
             return (buildRedirectResponse(location, client));
 
+        // Resolve the requested file and make sure it exists.
         std::string filesystemPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
         if (!pathExists(filesystemPath, &isDirectory))
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
+
+        // Only regular files can be deleted here.
         if (isDirectory)
             return (applyConnectionPolicy(Response::createErrorResponse(403, vhost), client));
 
+        // Remove the file from disk and report success.
         if (::remove(filesystemPath.c_str()) != 0)
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
 
