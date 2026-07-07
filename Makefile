@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
+#    By: gamorcil <gamorcil@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/04/27 22:36:40 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/06/22 17:11:07 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/07/07 14:20:21 by gamorcil         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ OBJDIR = obj
 
 SRCS =	src/main.cpp \
 		src/Server.cpp \
+		src/server_utils.cpp \
 		src/Vhost.cpp \
 		src/Location.cpp \
 		src/ConfigParser.cpp \

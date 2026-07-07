@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/09 19:00:46 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:05:50 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,12 @@
 #include <dirent.h>
 #include <sys/epoll.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sstream>
+#include <fstream>
 #include <cstring>
 #include <cctype>
+#include <ctime>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -27,24 +30,7 @@
 #include "ClientConnection.hpp"
 #include "ListeningSocket.hpp"
 #include "Socket.hpp"
-
-/**
- * @brief Checks if the string `filename` ends with the provided `extension`
- *
- * @param filename String to search on
- * @param extension String to search for
- * @return `true` or
- * @return `false`
- */
-static bool matchExtension(const std::string& filename, const std::string& extension)
-{
-    if (filename.length() < extension.length())
-        return (false);
-
-    std::string endOfString = filename.substr(filename.length() - extension.length());
-    return (endOfString == extension);
-}
-
+#include "ServerUtils.hpp"
 /**
  * @brief Construct a new Server:: Server object retrieving config files from default location
  *
@@ -60,7 +46,7 @@ Server::Server()
     {
         std::string filename = dirEntry->d_name;
 
-        if (dirEntry->d_type == DT_REG && matchExtension(filename, ".conf"))
+        if (dirEntry->d_type == DT_REG && server_utils::matchExtension(filename, ".conf"))
         {
             std::string fullpath = std::string(DEFAULT_CONFIG_DIR) + "/" + filename;
             _configurationFiles.push_back(fullpath);
@@ -86,7 +72,7 @@ Server::Server(int argc, char **argv)
 {
     for (int i = 1; i < argc; ++i)
     {
-        if (matchExtension(argv[i], ".conf"))
+        if (server_utils::matchExtension(argv[i], ".conf"))
         {
             _configurationFiles.push_back(argv[i]);
             std::cerr << "[INFO] " << argv[i] << " was correctly added as a configuration file." << std::endl;
@@ -373,42 +359,6 @@ static std::string decodeChunkedBody(const std::string& body)
 
 
 /**
- * @brief Checks if the request headers contain `Connection: keep-alive`
- *
- * @param headers Raw HTTP header block
- * @return `true` if keep-alive is requested
- * @return `false` otherwise
- */
-static bool hasKeepAlive(const std::string& headers)
-{
-    std::string lower;
-    lower.reserve(headers.length());
-    for (size_t i = 0; i < headers.length(); ++i)
-        lower += std::tolower(static_cast<unsigned char>(headers[i]));
-
-    size_t colonPos = lower.find("Connection:");
-    if (colonPos == std::string::npos)
-        return (false);
-
-    colonPos += 11;
-    colonPos = lower.find_first_not_of(" \t", colonPos);
-    if (colonPos == std::string::npos)
-        return (false);
-
-    size_t endPos = lower.find("\r\n", colonPos);
-    if (endPos == std::string::npos)
-        endPos = lower.length();
-
-    std::string value = lower.substr(colonPos, endPos - colonPos);
-    size_t lastNonSpace = value.find_last_not_of(" \t");
-    if (lastNonSpace == std::string::npos)
-        return (false);
-    value.erase(lastNonSpace + 1);
-
-    return (value == "keep-alive");
-}
-
-/**
  * @brief Checks whether or not the method on a request line is a valid HTTP method
  *
  * @param requestStr
@@ -528,7 +478,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
             Request request(reconstructedRequest);
             request.debugRequest();
             client->addPendingRequest(request);
-            client->setKeepAlive(hasKeepAlive(headers));
+            client->setKeepAlive(server_utils::hasKeepAlive(headers));
 
             size_t chunkEndPos = body.find("0\r\n\r\n");
             client->removeFromReadBuffer(headerEndPos + 4 + chunkEndPos + 5);
@@ -584,7 +534,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
                 Request request(client->getReadBuffer());
                 request.debugRequest();
                 client->addPendingRequest(request);
-                client->setKeepAlive(hasKeepAlive(headers));
+                client->setKeepAlive(server_utils::hasKeepAlive(headers));
             }
             catch(const std::exception& e)
             {
@@ -606,7 +556,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
             Request request(client->getReadBuffer());
             request.debugRequest();
             client->addPendingRequest(request);
-            client->setKeepAlive(hasKeepAlive(headers));
+            client->setKeepAlive(server_utils::hasKeepAlive(headers));
             client->removeFromReadBuffer(headerEndPos + 4);
         }
         catch(const std::exception& e)
@@ -728,51 +678,86 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 
 void Server::processPendingRequests()
 {
-    /*
-        - State 1: iterate through client connections
-        - State 2: iterate through pending requests
-        - State 3: light request verification
-            3.1 Match location to request
-            3.2 Verify method against allowed methods on location
-            3.3 Verify request body size against location max body size
-            3.4 Determine request type
-        - State 4: process CGI requests
-        - State 5: process non-CGI GET requests
-        - State 6: process non-CGI POST requests
-        - State 7: process non-CGI DELETE requests
-    */
-    /*
-        FOR EACH client IN _clientConnections
-            IF client._pendingRequests.empty()
-                CONTINUE
+    for (std::vector<ClientConnection*>::iterator clientIt = _clientConnections.begin();
+         clientIt != _clientConnections.end(); ++clientIt)
+    {
+		//If no client we just skip
+        ClientConnection* client = *clientIt;
+        if (client == NULL || client->getVhost() == NULL)
+            continue;
 
-            // Erase elements during iteration to avoid iterator invalidation when removing pending requests from original vector
-            FOR EACH it IN client._pendingRequests
-                request = *it
-                location = getMatchingLocation(request)
-                IF validateRequest(request, location, client) FAIL
-                    it = client._pendingRequests.erase(it)
-                    CONTINUE
-                IF isCgiRequest() TRUE
-                    processCGIRequest(request)
-                    it = client._pendingRequests.erase(it)
-                    CONTINUE
-                ELSE
-                    requestType = getRequestMethod(request)
-                    SWITCH requestType
-                        CASE GET
-                            processGETRequest(request)
-                            it = client._pendingRequests.erase(it)
-                            break
-                        CASE POST
-                            processPOSTRequest(request)
-                            it = client._pendingRequests.erase(it)
-                            break
-                        CASE DELETE
-                            processDELETERequest(request)
-                            it = client._pendingRequests.erase(it)
-                            break
-    */
+        const std::vector<Request>& pendingRequests = client->getPendingRequests();
+        if (pendingRequests.empty())
+            continue;
+
+        std::vector<Request> requestsToProcess = pendingRequests;
+        for (std::vector<Request>::const_iterator requestIt = requestsToProcess.begin();
+             requestIt != requestsToProcess.end(); ++requestIt)
+        {
+            const Request& request = *requestIt;
+            const Vhost& vhost = *(client->getVhost());
+            const Location* location = server_utils::findBestLocation(vhost, request.getPath());
+            Response response(500);
+            bool builtResponse = false;
+
+            try
+            {
+                if (location == NULL)
+                {
+                    response = server_utils::applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
+                    builtResponse = true;
+                }
+                else if (!server_utils::requestMethodAllowed(*location, request.getMethod()))
+                {
+                    response = server_utils::buildMethodNotAllowedResponse(*location, vhost, client);
+                    builtResponse = true;
+                }
+                else if (request.getBody().length() > location->getMaxBodySize())
+                {
+                    response = server_utils::applyConnectionPolicy(Response::createErrorResponse(413, vhost), client);
+                    builtResponse = true;
+                }
+                else if (server_utils::isCgiRequest(vhost, request))
+                {
+                    response = server_utils::buildCgiResponse(vhost, *location, request, client);
+                    builtResponse = true;
+                }
+                else if (request.getMethod() == "GET")
+                {
+                    response = server_utils::buildGetResponse(vhost, *location, request, client);
+                    builtResponse = true;
+                }
+                else if (request.getMethod() == "POST")
+                {
+                    response = server_utils::buildPostResponse(vhost, *location, request, client);
+                    builtResponse = true;
+                }
+                else if (request.getMethod() == "DELETE")
+                {
+                    response = server_utils::buildDeleteResponse(vhost, *location, request, client);
+                    builtResponse = true;
+                }
+                else
+                {
+                    response = server_utils::buildMethodNotAllowedResponse(*location, vhost, client);
+                    builtResponse = true;
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[ERROR] Failed to process request on fd " << client->getSocketFd()
+                          << ": " << e.what() << std::endl;
+                response = server_utils::applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
+                builtResponse = true;
+            }
+
+            if (builtResponse)
+            {
+                client->addPendingResponse(response);
+                client->removePendingRequest(request);
+            }
+        }
+    }
 }
 
 /**

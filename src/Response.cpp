@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
+/*   By: gamorcil <gamorcil@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:44:02 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/07 14:52:28 by gamorcil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,15 +114,23 @@ std::string Response::codeToReason(int code) const
 {
     switch (code)
     {
+        case 204: return "No Content";
         case 200: return "OK";
         case 201: return "Created";
+        case 301: return "Moved Permanently";
+        case 302: return "Found";
+        case 303: return "See Other";
+        case 307: return "Temporary Redirect";
+        case 308: return "Permanent Redirect";
         case 400: return "Bad Request";
         case 403: return "Forbidden";
         case 404: return "Not Found";
+        case 418: return "I'm a Teapot";
         case 413: return "Payload Too Large";
         case 431: return "Request Header Fields Too Large";
         case 405: return "Method Not Allowed";
         case 500: return "Internal Server Error";
+        case 501: return "Not Implemented";
         default:  return "Unknown Status";
     }
 }
