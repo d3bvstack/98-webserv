@@ -192,6 +192,8 @@ namespace
         if (exitStatus != NULL)
             *exitStatus = 0;
 
+        // Put the CGI stdout/stderr pipe in non-blocking mode so we can
+        // interleave reads with timeout checks and child-process polling.
         int flags = fcntl(outputFd, F_GETFL, 0);
         if (flags == -1 || fcntl(outputFd, F_SETFL, flags | O_NONBLOCK) == -1)
             return (false);
@@ -210,10 +212,13 @@ namespace
                 pollEntry.events = POLLIN;
                 pollEntry.revents = 0;
 
+                // Recompute the remaining time on every iteration so the whole
+                // collection phase is bounded by CGI_RESPONSE_TIMEOUT_SECONDS.
                 int elapsedSeconds = static_cast<int>(std::difftime(std::time(NULL), startTime));
                 int remainingTimeout = static_cast<int>(CGI_RESPONSE_TIMEOUT_SECONDS) - elapsedSeconds;
                 if (remainingTimeout <= 0)
                 {
+                    // The CGI overstayed its time budget; kill it and report failure.
                     kill(pid, SIGKILL);
                     waitpid(pid, &status, 0);
                     if (exitStatus != NULL)
@@ -221,12 +226,14 @@ namespace
                     return (false);
                 }
 
+                // Wait until the pipe becomes readable or the timeout expires.
                 int pollResult = poll(&pollEntry, 1, remainingTimeout * 1000);
                 if (pollResult == -1)
                     return (false);
 
                 if (pollResult == 0)
                 {
+                    // No output arrived before the deadline.
                     kill(pid, SIGKILL);
                     waitpid(pid, &status, 0);
                     if (exitStatus != NULL)
@@ -237,6 +244,8 @@ namespace
                 if (pollEntry.revents & (POLLERR | POLLNVAL))
                     return (false);
 
+                // Drain everything currently available so we do not spin on the
+                // same readable event and to avoid leaving data in the pipe.
                 char buffer[4096];
                 while (true)
                 {
@@ -259,6 +268,7 @@ namespace
 
             if (!childExited)
             {
+                // Check whether the child has already terminated without blocking.
                 pid_t waitResult = waitpid(pid, &status, WNOHANG);
                 if (waitResult == -1)
                     return (false);
@@ -266,6 +276,7 @@ namespace
                     childExited = true;
             }
 
+            // Success only happens once the pipe is closed and the child is gone.
             if (outputClosed && childExited)
             {
                 if (exitStatus != NULL)
@@ -273,6 +284,7 @@ namespace
                 return (true);
             }
 
+            // Final guard in case the loop is still active after the deadline.
             if (std::difftime(std::time(NULL), startTime) >= CGI_RESPONSE_TIMEOUT_SECONDS)
             {
                 kill(pid, SIGKILL);
