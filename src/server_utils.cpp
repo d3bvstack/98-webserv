@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <cctype>
 #include <cstdlib>
+#include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
 #include <vector>
 #include <utility>
@@ -17,6 +19,8 @@
 
 namespace
 {
+    const unsigned int CGI_RESPONSE_TIMEOUT_SECONDS = 5;
+
     bool hasSuffix(const std::string& value, const std::string& suffix)
     {
         if (value.length() < suffix.length())
@@ -180,20 +184,104 @@ namespace
         return (it->second);
     }
 
-    std::string readAllFromFd(int fd)
+    bool collectCgiOutputWithTimeout(pid_t pid, int outputFd, std::string* output, int* exitStatus)
     {
-        std::string output;
-        char buffer[4096];
+        if (output == NULL)
+            return (false);
+
+        if (exitStatus != NULL)
+            *exitStatus = 0;
+
+        int flags = fcntl(outputFd, F_GETFL, 0);
+        if (flags == -1 || fcntl(outputFd, F_SETFL, flags | O_NONBLOCK) == -1)
+            return (false);
+
+        time_t startTime = std::time(NULL);
+        bool outputClosed = false;
+        bool childExited = false;
+        int status = 0;
 
         while (true)
         {
-            ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
-            if (bytesRead > 0)
-                output.append(buffer, static_cast<size_t>(bytesRead));
-            else
-                break;
+            if (!outputClosed)
+            {
+                struct pollfd pollEntry;
+                pollEntry.fd = outputFd;
+                pollEntry.events = POLLIN;
+                pollEntry.revents = 0;
+
+                int elapsedSeconds = static_cast<int>(std::difftime(std::time(NULL), startTime));
+                int remainingTimeout = static_cast<int>(CGI_RESPONSE_TIMEOUT_SECONDS) - elapsedSeconds;
+                if (remainingTimeout <= 0)
+                {
+                    kill(pid, SIGKILL);
+                    waitpid(pid, &status, 0);
+                    if (exitStatus != NULL)
+                        *exitStatus = status;
+                    return (false);
+                }
+
+                int pollResult = poll(&pollEntry, 1, remainingTimeout * 1000);
+                if (pollResult == -1)
+                    return (false);
+
+                if (pollResult == 0)
+                {
+                    kill(pid, SIGKILL);
+                    waitpid(pid, &status, 0);
+                    if (exitStatus != NULL)
+                        *exitStatus = status;
+                    return (false);
+                }
+
+                if (pollEntry.revents & (POLLERR | POLLNVAL))
+                    return (false);
+
+                char buffer[4096];
+                while (true)
+                {
+                    ssize_t bytesRead = read(outputFd, buffer, sizeof(buffer));
+                    if (bytesRead > 0)
+                    {
+                        output->append(buffer, static_cast<size_t>(bytesRead));
+                    }
+                    else if (bytesRead == 0)
+                    {
+                        outputClosed = true;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (!childExited)
+            {
+                pid_t waitResult = waitpid(pid, &status, WNOHANG);
+                if (waitResult == -1)
+                    return (false);
+                if (waitResult == pid)
+                    childExited = true;
+            }
+
+            if (outputClosed && childExited)
+            {
+                if (exitStatus != NULL)
+                    *exitStatus = status;
+                return (true);
+            }
+
+            if (std::difftime(std::time(NULL), startTime) >= CGI_RESPONSE_TIMEOUT_SECONDS)
+            {
+                kill(pid, SIGKILL);
+                waitpid(pid, &status, 0);
+                if (exitStatus != NULL)
+                    *exitStatus = status;
+                return (false);
+            }
         }
-        return (output);
     }
 
     std::pair<int, std::string> parseCgiStatus(const std::string& statusValue)
@@ -428,8 +516,6 @@ namespace server_utils
         std::string scriptPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
 
-        std::cerr << "[INFO] " << scriptPath << std::endl;
-
         if (!pathExists(scriptPath, &isDirectory) || isDirectory)
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
 
@@ -533,13 +619,16 @@ namespace server_utils
         close(inputPipe[1]);
 
         // Read the CGI output before waiting so we do not deadlock on a full pipe.
-        std::string rawOutput = readAllFromFd(outputPipe[0]);
+        std::string rawOutput;
+        int cgiStatus = 0;
+        if (!collectCgiOutputWithTimeout(pid, outputPipe[0], &rawOutput, &cgiStatus))
+        {
+            close(outputPipe[0]);
+            return (applyConnectionPolicy(Response::createErrorResponse(504, vhost), client));
+        }
         close(outputPipe[0]);
 
-        int status = 0;
-        waitpid(pid, &status, 0);
-
-        if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+        if (WIFEXITED(cgiStatus) == 0 || WEXITSTATUS(cgiStatus) != 0)
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
 
         // Convert CGI headers/body into the server's Response object.

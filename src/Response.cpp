@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gamorcil <gamorcil@student.42madrid.com    +#+  +:+       +#+        */
+/*   By: atabarea <atabarea@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/07 14:52:28 by gamorcil         ###   ########.fr       */
+/*   Updated: 2026/07/08 12:36:12 by atabarea         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,6 +131,7 @@ std::string Response::codeToReason(int code) const
         case 405: return "Method Not Allowed";
         case 500: return "Internal Server Error";
         case 501: return "Not Implemented";
+        case 504: return "Gateway Timeout";
         default:  return "Unknown Status";
     }
 }
