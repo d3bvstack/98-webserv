@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/09 19:05:50 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:06:27 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -704,21 +704,25 @@ void Server::processPendingRequests()
             {
                 if (location == NULL)
                 {
+                    std::cerr << "[INFO] No location matches" << std::endl;
                     response = server_utils::applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
                     builtResponse = true;
                 }
                 else if (!server_utils::requestMethodAllowed(*location, request.getMethod()))
                 {
+                    std::cerr << "[INFO] Method not allowed on location" << std::endl;
                     response = server_utils::buildMethodNotAllowedResponse(*location, vhost, client);
                     builtResponse = true;
                 }
                 else if (request.getBody().length() > location->getMaxBodySize())
                 {
+                    std::cerr << "[INFO] Request body larger than location limit" << std::endl;
                     response = server_utils::applyConnectionPolicy(Response::createErrorResponse(413, vhost), client);
                     builtResponse = true;
                 }
                 else if (server_utils::isCgiRequest(vhost, request))
                 {
+                    std::cerr << "[INFO] CGI Request detected" << std::endl;
                     response = server_utils::buildCgiResponse(vhost, *location, request, client);
                     builtResponse = true;
                 }
@@ -739,6 +743,7 @@ void Server::processPendingRequests()
                 }
                 else
                 {
+                    std::cerr << "[INFO] Method unknown" << std::endl;
                     response = server_utils::buildMethodNotAllowedResponse(*location, vhost, client);
                     builtResponse = true;
                 }

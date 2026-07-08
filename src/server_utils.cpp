@@ -419,15 +419,21 @@ namespace server_utils
         if (location.isReturnSet())
             return (buildRedirectResponse(location, client));
 
+        // Pick the CGI interpreter from the request extension and vhost map.
         std::string interpreter = findCgiInterpreter(vhost, request);
         if (interpreter.empty())
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
 
+        // The script must exist and must not be a directory.
         std::string scriptPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
+
+        std::cerr << "[INFO] " << scriptPath << std::endl;
+
         if (!pathExists(scriptPath, &isDirectory) || isDirectory)
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
 
+        // Create one pipe for request body input and one for CGI output.
         int inputPipe[2];
         int outputPipe[2];
         if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
@@ -445,6 +451,7 @@ namespace server_utils
 
         if (pid == 0)
         {
+            // Child process: wire the pipes to stdin/stdout/stderr.
             dup2(inputPipe[0], STDIN_FILENO);
             dup2(outputPipe[1], STDOUT_FILENO);
             dup2(outputPipe[1], STDERR_FILENO);
@@ -455,6 +462,7 @@ namespace server_utils
             close(outputPipe[1]);
 
             std::vector<std::string> envStrings;
+            // Populate the CGI environment expected by the script.
             envStrings.push_back("GATEWAY_INTERFACE=CGI/1.1");
             envStrings.push_back("REQUEST_METHOD=" + request.getMethod());
             envStrings.push_back("QUERY_STRING=" + request.getQueryString());
@@ -509,6 +517,7 @@ namespace server_utils
             _exit(1);
         }
 
+        // Parent process: send the request body to the CGI script.
         close(inputPipe[0]);
         close(outputPipe[1]);
 
@@ -523,6 +532,7 @@ namespace server_utils
         }
         close(inputPipe[1]);
 
+        // Read the CGI output before waiting so we do not deadlock on a full pipe.
         std::string rawOutput = readAllFromFd(outputPipe[0]);
         close(outputPipe[0]);
 
@@ -532,6 +542,7 @@ namespace server_utils
         if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
 
+        // Convert CGI headers/body into the server's Response object.
         Response response = buildResponseFromCgiOutput(rawOutput);
         return (applyConnectionPolicy(response, client));
     }
