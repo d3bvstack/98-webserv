@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 20:06:48 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 14:08:22 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/08 12:25:37 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,12 @@ void Location::setReturn(const std::string& value)
 
 void Location::addMethod(const std::string& method)
 {
-    _methods.push_back(method);
+    std::stringstream ss(method);
+    std::string single;
+    while (ss >> single)
+    {
+        _methods.push_back(single);
+    }
 }
 
 void Location::verify() const
