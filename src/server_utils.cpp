@@ -8,9 +8,9 @@
 #include <cstdio>
 #include <cctype>
 #include <cstdlib>
-#include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <vector>
 #include <utility>
 #include <sys/wait.h>
@@ -192,11 +192,8 @@ namespace
         if (exitStatus != NULL)
             *exitStatus = 0;
 
-        // Put the CGI stdout/stderr pipe in non-blocking mode so we can
-        // interleave reads with timeout checks and child-process polling.
-        int flags = fcntl(outputFd, F_GETFL, 0);
-        if (flags == -1 || fcntl(outputFd, F_SETFL, flags | O_NONBLOCK) == -1)
-            return (false);
+        // Use ioctl(FIONREAD) to determine how many bytes are available
+        // to read so we can avoid blocking reads without using fcntl().
 
         time_t startTime = std::time(NULL);
         bool outputClosed = false;
@@ -249,19 +246,43 @@ namespace
                 char buffer[4096];
                 while (true)
                 {
-                    ssize_t bytesRead = read(outputFd, buffer, sizeof(buffer));
-                    if (bytesRead > 0)
+                    int bytesAvailable = 0;
+                    if (ioctl(outputFd, FIONREAD, &bytesAvailable) == -1)
+                        return (false);
+
+                    if (bytesAvailable == 0)
                     {
-                        output->append(buffer, static_cast<size_t>(bytesRead));
-                    }
-                    else if (bytesRead == 0)
-                    {
-                        outputClosed = true;
-                        break;
+                        // No bytes reported available: attempt one read which
+                        // should return 0 on EOF or some bytes if still
+                        // readable according to poll.
+                        ssize_t bytesRead = read(outputFd, buffer, sizeof(buffer));
+                        if (bytesRead > 0)
+                            output->append(buffer, static_cast<size_t>(bytesRead));
+                        else if (bytesRead == 0)
+                        {
+                            outputClosed = true;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                     else
                     {
-                        break;
+                        ssize_t toRead = (bytesAvailable > static_cast<int>(sizeof(buffer))) ? sizeof(buffer) : bytesAvailable;
+                        ssize_t bytesRead = read(outputFd, buffer, static_cast<size_t>(toRead));
+                        if (bytesRead > 0)
+                            output->append(buffer, static_cast<size_t>(bytesRead));
+                        else if (bytesRead == 0)
+                        {
+                            outputClosed = true;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
