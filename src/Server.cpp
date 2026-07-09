@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/02 15:17:48 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:00:46 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -278,7 +278,7 @@ void Server::disconnectClient(int clientFd)
 {
     std::cerr << "[INFO] Client disconnected on fd " << clientFd << std::endl;
 
-    _epoll.removeSocket(clientFd);
+    _epoll.removeFd(clientFd);
 
     for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
         it != _clientConnections.end(); ++it)

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:10:01 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:33:23 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:00:46 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,9 @@ class Epoll
 
         void addListeningSocket(uint32_t fd);
         void addClientSocket(uint32_t fd);
-        void removeSocket(uint32_t fd);
+        void removeFd(uint32_t fd);
+        void addFd(uint32_t fd, uint32_t events);
+        void modifyFd(uint32_t fd, uint32_t events);
         int waitWrapper();
 
         epoll_event *getEvents()    { return (_events); }

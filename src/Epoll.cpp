@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:11:13 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:00:46 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,35 @@ void Epoll::addClientSocket(uint32_t fd)
     std::cerr << "[INFO] Client socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::removeSocket(uint32_t fd)
+void Epoll::addFd(uint32_t fd, uint32_t events)
+{
+    epoll_event event;
+    event.events = events;
+    event.data.fd = fd;
+    if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
+    {
+        std::stringstream out;
+        out << "Failed to add fd " << fd << " to epoll: "
+            << errno << " - " << strerror(errno);
+        throw std::runtime_error(out.str());
+    }
+}
+
+void Epoll::modifyFd(uint32_t fd, uint32_t events)
+{
+    epoll_event event;
+    event.events = events;
+    event.data.fd = fd;
+    if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) == -1)
+    {
+        std::stringstream out;
+        out << "Failed to modify fd " << fd << " on epoll: "
+            << errno << " - " << strerror(errno);
+        throw std::runtime_error(out.str());
+    }
+}
+
+void Epoll::removeFd(uint32_t fd)
 {
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {
