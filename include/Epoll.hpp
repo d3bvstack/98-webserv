@@ -30,11 +30,11 @@ class Epoll
         Epoll();
         ~Epoll();
 
-        void addListeningSocket(uint32_t fd);
-        void addClientSocket(uint32_t fd);
+        void addListeningSocket(uint32_t fd, void* ctx);
+        void addClientSocket(uint32_t fd, void* ctx);
         void removeFd(uint32_t fd);
-        void addFd(uint32_t fd, uint32_t events);
-        void modifyFd(uint32_t fd, uint32_t events);
+        void addFd(uint32_t fd, uint32_t events, void* ctx);
+        void modifyFd(uint32_t fd, uint32_t events, void* ctx);
         int waitWrapper();
 
         epoll_event *getEvents()    { return (_events); }

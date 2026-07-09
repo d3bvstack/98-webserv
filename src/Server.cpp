@@ -205,7 +205,7 @@ void Server::registerListeningSocketsWithEpoll()
     {
         try
         {
-            _epoll.addListeningSocket((*it)->getSocketFd());
+            _epoll.addListeningSocket((*it)->getSocketFd(), *it);
             ++registered_n;
         }
         catch(const std::exception& e)
@@ -243,32 +243,6 @@ int Server::pollEvents()
     return (_epoll.waitWrapper());
 }
 
-/**
- * @brief Retrieve Socket instance from a file descriptor
- *
- * @param fd
- * @return Socket*
- */
-Socket* Server::socketFromFd(int fd)
-{
-    for (std::vector<ListeningSocket*>::iterator it = _listeningSockets.begin();
-         it != _listeningSockets.end(); ++it)
-    {
-        if ((*it)->getSocketFd() == fd)
-        {
-            return (*it);
-        }
-    }
-    for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
-        it != _clientConnections.end(); ++it)
-    {
-        if ((*it)->getSocketFd() == fd)
-        {
-            return (*it);
-        }
-    }
-    return NULL;
-}
 /**
  * @brief Disconnects a ClientConection identified by its fd
  *
@@ -334,7 +308,7 @@ void Server::acceptNewConnection(Socket* listenSocket)
         }
         newClient->updateActivity();
         _clientConnections.push_back(newClient);
-        _epoll.addClientSocket(newSocketFd);
+        _epoll.addClientSocket(newSocketFd, newClient);
 
         std::cerr << "[INFO] New connection established on fd " << newSocketFd
                   << " port: " << port << std::endl;
@@ -347,24 +321,6 @@ void Server::acceptNewConnection(Socket* listenSocket)
     }
 }
 
-/**
- * @brief Get a client Connection from fd
- *
- * @param clientFd
- * @return ClientConnection*
- */
-ClientConnection* Server::clientFromFd(int clientFd)
-{
-    for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
-        it != _clientConnections.end(); ++it)
-    {
-        if ((*it)->getSocketFd() == clientFd)
-        {
-            return (*it);
-        }
-    }
-    return NULL;
-}
 
 /**
  * @brief Process a chunk encoded body into a standard unchunked body
@@ -482,23 +438,17 @@ static bool isValidMethod(const std::string& requestStr)
  * It handles reading from the fd, storing on buffer, checking general validity of HTTP request structure,
  * builds a Request object from it and adds to the pending requests queue.
  *
- * @param clientFd
+ * @param client
  */
-void Server::handleClientIncomingEvent(int clientFd)
+void Server::handleClientIncomingEvent(ClientConnection* client)
 {
+    int clientFd = client->getSocketFd();
     char buffer[4096];
     ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 
     if (bytesRead <= 0)
     {
         disconnectClient(clientFd);
-        return;
-    }
-
-    ClientConnection* client = clientFromFd(clientFd);
-    if (client == NULL)
-    {
-        std::cerr << "[ERROR] Client connection not found for fd " << clientFd << std::endl;
         return;
     }
 
@@ -683,14 +633,15 @@ void Server::handleIncomingEvents(int activeEventsCount)
 
     for (int i = 0; i < activeEventsCount; ++i)
     {
-        int eventFd = events[i].data.fd;
+        Socket* socket = static_cast<Socket*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        Socket* socket = socketFromFd(eventFd);
         if (socket == NULL)
         {
             continue;
         }
+
+        int eventFd = socket->getSocketFd();
 
         if (eventTypes & (EPOLLERR | EPOLLHUP))
         {
@@ -714,7 +665,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
             {
-                handleClientIncomingEvent(eventFd);
+                handleClientIncomingEvent(static_cast<ClientConnection*>(socket));
             }
         }
     }
@@ -724,17 +675,10 @@ void Server::handleIncomingEvents(int activeEventsCount)
  * @brief Logic that writes to client socket fds the pending responses on client connection
  * closes connection on innactive connections without keep alive
  *
- * @param clientFd
+ * @param client
  */
-void Server::handleClientOutgoingEvent(int clientFd)
+void Server::handleClientOutgoingEvent(ClientConnection* client)
 {
-    ClientConnection* client = clientFromFd(clientFd);
-    if (client == NULL)
-    {
-        std::cerr << "[ERROR] Client connection not found for fd " << clientFd << std::endl;
-        return;
-    }
-
     if (client->getWriteBuffer() == NULL)
     {
         const std::vector<Response>& pending = client->getPendingResponses();
@@ -762,13 +706,11 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 {
     epoll_event* events = _epoll.getEvents();
 
-
     for (int i = 0; i < activeEventsCount; ++i)
     {
-        int eventFd = events[i].data.fd;
+        Socket* socket = static_cast<Socket*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        Socket* socket = socketFromFd(eventFd);
         if (socket == NULL)
         {
             continue;
@@ -778,7 +720,7 @@ void Server::handleOutgoingEvents(int activeEventsCount)
         {
             if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
             {
-                handleClientOutgoingEvent(eventFd);
+                handleClientOutgoingEvent(static_cast<ClientConnection*>(socket));
             }
         }
     }

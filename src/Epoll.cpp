@@ -40,11 +40,11 @@ Epoll::~Epoll()
     }
 }
 
-void Epoll::addListeningSocket(uint32_t fd)
+void Epoll::addListeningSocket(uint32_t fd, void* ctx)
 {
     epoll_event event;
     event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-    event.data.fd = fd;
+    event.data.ptr = ctx;
 
     if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
     {
@@ -56,11 +56,11 @@ void Epoll::addListeningSocket(uint32_t fd)
     std::cerr << "[INFO] Listening socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::addClientSocket(uint32_t fd)
+void Epoll::addClientSocket(uint32_t fd, void* ctx)
 {
     epoll_event event;
     event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP;
-    event.data.fd = fd;
+    event.data.ptr = ctx;
 
     if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
     {
@@ -72,11 +72,11 @@ void Epoll::addClientSocket(uint32_t fd)
     std::cerr << "[INFO] Client socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::addFd(uint32_t fd, uint32_t events)
+void Epoll::addFd(uint32_t fd, uint32_t events, void* ctx)
 {
     epoll_event event;
     event.events = events;
-    event.data.fd = fd;
+    event.data.ptr = ctx;
     if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
     {
         std::stringstream out;
@@ -86,11 +86,11 @@ void Epoll::addFd(uint32_t fd, uint32_t events)
     }
 }
 
-void Epoll::modifyFd(uint32_t fd, uint32_t events)
+void Epoll::modifyFd(uint32_t fd, uint32_t events, void* ctx)
 {
     epoll_event event;
     event.events = events;
-    event.data.fd = fd;
+    event.data.ptr = ctx;
     if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) == -1)
     {
         std::stringstream out;

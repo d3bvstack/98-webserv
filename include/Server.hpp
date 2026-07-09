@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/29 10:55:36 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/09 21:05:04 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,17 +33,16 @@ class Server
     private:
         std::vector<std::string>         _configurationFiles;
         std::vector<Vhost>               _vhosts; // Maybe change to map<port, vector<Vhosts>>
-        std::vector<ListeningSocket*>    _listeningSockets; // maybe change to map<socketFd, ListeningSocket>
+        std::vector<ListeningSocket*>    _listeningSockets;
         std::vector<ClientConnection*>   _clientConnections;
 
-        Epoll                           _epoll;
+        Epoll                            _epoll;
 
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
         void acceptNewConnection(Socket* listenSocket);
         void disconnectClient(int clientFd);
-        void handleClientIncomingEvent(int clientFd);
-        void handleClientOutgoingEvent(int clientFd);
-        ClientConnection* clientFromFd(int clientFd);
+        void handleClientIncomingEvent(ClientConnection* client);
+        void handleClientOutgoingEvent(ClientConnection* client);
 
     public:
         Server();
@@ -61,7 +60,6 @@ class Server
         void registerListeningSocketsWithEpoll();
         void startListening();
         int pollEvents();
-        Socket* socketFromFd(int fd);
         void handleIncomingEvents(int nEvents);
         void handleOutgoingEvents(int nEvents);
         void processPendingRequests();
