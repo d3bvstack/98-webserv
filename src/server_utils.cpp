@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <poll.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <vector>
 #include <utility>
 #include <sys/wait.h>
@@ -192,9 +191,6 @@ namespace
         if (exitStatus != NULL)
             *exitStatus = 0;
 
-        // Use ioctl(FIONREAD) to determine how many bytes are available
-        // to read so we can avoid blocking reads without using fcntl().
-
         time_t startTime = std::time(NULL);
         bool outputClosed = false;
         bool childExited = false;
@@ -241,49 +237,21 @@ namespace
                 if (pollEntry.revents & (POLLERR | POLLNVAL))
                     return (false);
 
-                // Drain everything currently available so we do not spin on the
-                // same readable event and to avoid leaving data in the pipe.
+                // Read once per poll wake-up; poll guarantees readability.
                 char buffer[4096];
-                while (true)
+                ssize_t bytesRead = read(outputFd, buffer, sizeof(buffer));
+                if (bytesRead > 0)
                 {
-                    int bytesAvailable = 0;
-                    if (ioctl(outputFd, FIONREAD, &bytesAvailable) == -1)
-                        return (false);
-
-                    if (bytesAvailable == 0)
-                    {
-                        // No bytes reported available: attempt one read which
-                        // should return 0 on EOF or some bytes if still
-                        // readable according to poll.
-                        ssize_t bytesRead = read(outputFd, buffer, sizeof(buffer));
-                        if (bytesRead > 0)
-                            output->append(buffer, static_cast<size_t>(bytesRead));
-                        else if (bytesRead == 0)
-                        {
-                            outputClosed = true;
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        ssize_t toRead = (bytesAvailable > static_cast<int>(sizeof(buffer))) ? sizeof(buffer) : bytesAvailable;
-                        ssize_t bytesRead = read(outputFd, buffer, static_cast<size_t>(toRead));
-                        if (bytesRead > 0)
-                            output->append(buffer, static_cast<size_t>(bytesRead));
-                        else if (bytesRead == 0)
-                        {
-                            outputClosed = true;
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+                    output->append(buffer, static_cast<size_t>(bytesRead));
+                }
+                else if (bytesRead == 0)
+                {
+                    outputClosed = true;
+                }
+                else
+                {
+                    // Keep collecting until timeout/EOF instead of failing fast.
+                    continue;
                 }
             }
 
