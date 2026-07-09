@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/09 19:06:27 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/10 00:28:38 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,15 @@
 #include <exception>
 #include <iostream>
 #include <stdexcept>
+#include <typeinfo>
 #include "Request.hpp"
 #include "Response.hpp"
 #include "ClientConnection.hpp"
 #include "ListeningSocket.hpp"
 #include "Socket.hpp"
 #include "ServerUtils.hpp"
+#include "EventTarget.hpp"
+#include "CGIContext.hpp"
 /**
  * @brief Construct a new Server:: Server object retrieving config files from default location
  *
@@ -88,6 +91,12 @@ Server::Server(int argc, char **argv)
 
 Server::~Server()
 {
+    for (size_t i = 0; i < _cgiContexts.size(); ++i)
+    {
+        delete _cgiContexts[i];
+    } 
+    _cgiContexts.clear();
+
     for (size_t i = 0; i < _listeningSockets.size(); ++i)
     {
         delete _listeningSockets[i];
@@ -239,6 +248,22 @@ void Server::disconnectClient(int clientFd)
     std::cerr << "[INFO] Client disconnected on fd " << clientFd << std::endl;
 
     _epoll.removeFd(clientFd);
+
+    for (std::vector<CGIContext*>::iterator cgiIt = _cgiContexts.begin();
+         cgiIt != _cgiContexts.end(); )
+    {
+        if ((*cgiIt)->getClient() != NULL && (*cgiIt)->getClient()->getSocketFd() == clientFd)
+        {
+            _epoll.removeFd((*cgiIt)->getOutputReadFd());
+            _epoll.removeFd((*cgiIt)->getInputWriteFd());
+            delete *cgiIt;
+            cgiIt = _cgiContexts.erase(cgiIt);
+        }
+        else
+        {
+            ++cgiIt;
+        }
+    }
 
     for (std::vector<ClientConnection*> ::iterator it = _clientConnections.begin();
         it != _clientConnections.end(); ++it)
@@ -583,39 +608,46 @@ void Server::handleIncomingEvents(int activeEventsCount)
 
     for (int i = 0; i < activeEventsCount; ++i)
     {
-        Socket* socket = static_cast<Socket*>(events[i].data.ptr);
+        EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        if (socket == NULL)
-        {
+        if (target == NULL)
             continue;
-        }
-
-        int eventFd = socket->getSocketFd();
 
         if (eventTypes & (EPOLLERR | EPOLLHUP))
         {
-            std::cerr << "[ERROR] Socket error or hangup on fd " << eventFd << std::endl;
-            if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            if (typeid(*target) == typeid(CGIContext))
             {
-                disconnectClient(eventFd);
+                static_cast<CGIContext*>(target)->handleError(_epoll);
             }
-            else if (socket->getSocketType() == SOCKET_TYPE_LISTEN)
+            else if (typeid(*target) == typeid(ClientConnection))
             {
-                close(eventFd);
+                ClientConnection* client = static_cast<ClientConnection*>(target);
+                std::cerr << "[ERROR] Socket error or hangup on fd " << client->getSocketFd() << std::endl;
+                disconnectClient(client->getSocketFd());
+            }
+            else if (typeid(*target) == typeid(ListeningSocket))
+            {
+                ListeningSocket* listen = static_cast<ListeningSocket*>(target);
+                std::cerr << "[ERROR] Socket error or hangup on fd " << listen->getSocketFd() << std::endl;
+                close(listen->getSocketFd());
             }
             continue;
         }
 
         if (eventTypes & EPOLLIN)
         {
-            if (socket->getSocketType() == SOCKET_TYPE_LISTEN)
+            if (typeid(*target) == typeid(CGIContext))
             {
-                acceptNewConnection(socket);
+                static_cast<CGIContext*>(target)->onCgiOutputReadable(_epoll);
             }
-            else if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            else if (typeid(*target) == typeid(ListeningSocket))
             {
-                handleClientIncomingEvent(static_cast<ClientConnection*>(socket));
+                acceptNewConnection(static_cast<ListeningSocket*>(target));
+            }
+            else if (typeid(*target) == typeid(ClientConnection))
+            {
+                handleClientIncomingEvent(static_cast<ClientConnection*>(target));
             }
         }
     }
@@ -658,19 +690,21 @@ void Server::handleOutgoingEvents(int activeEventsCount)
 
     for (int i = 0; i < activeEventsCount; ++i)
     {
-        Socket* socket = static_cast<Socket*>(events[i].data.ptr);
+        EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        if (socket == NULL)
-        {
+        if (target == NULL)
             continue;
-        }
 
         if (eventTypes & EPOLLOUT)
         {
-            if (socket->getSocketType() == SOCKET_TYPE_CLIENT)
+            if (typeid(*target) == typeid(CGIContext))
             {
-                handleClientOutgoingEvent(static_cast<ClientConnection*>(socket));
+                static_cast<CGIContext*>(target)->onCgiInputWritable(_epoll);
+            }
+            else if (typeid(*target) == typeid(ClientConnection))
+            {
+                handleClientOutgoingEvent(static_cast<ClientConnection*>(target));
             }
         }
     }
@@ -723,8 +757,21 @@ void Server::processPendingRequests()
                 else if (server_utils::isCgiRequest(vhost, request))
                 {
                     std::cerr << "[INFO] CGI Request detected" << std::endl;
-                    response = server_utils::buildCgiResponse(vhost, *location, request, client);
-                    builtResponse = true;
+                    CGIContext* cgi = new CGIContext(vhost, *location, request, client);
+                    if (cgi->start(_epoll))
+                    {
+                        _cgiContexts.push_back(cgi);
+                        client->removePendingRequest(request);
+                        continue;
+                    }
+                    else
+                    {
+                        int code = cgi->getErrorStatusCode();
+                        if (code == 0) code = 500;
+                        response = server_utils::applyConnectionPolicy(Response::createErrorResponse(code, vhost), client);
+                        builtResponse = true;
+                        delete cgi;
+                    }
                 }
                 else if (request.getMethod() == "GET")
                 {
@@ -770,6 +817,44 @@ void Server::processPendingRequests()
  * disconnects client if idle time larger than established timeout
  *
  */
+void Server::checkCgiChildren()
+{
+    for (size_t i = 0; i < _cgiContexts.size(); )
+    {
+        CGIContext* cgi = _cgiContexts[i];
+        cgi->checkChild(_epoll);
+
+        if (cgi->isComplete())
+        {
+            cgi->deliverResponse();
+            cleanupCgiContext(cgi);
+        }
+        else
+        {
+            ++i;
+        }
+    }
+}
+
+void Server::cleanupCgiContext(CGIContext* cgi)
+{
+    if (cgi->getOutputReadFd() != -1)
+        _epoll.removeFd(cgi->getOutputReadFd());
+    if (cgi->getInputWriteFd() != -1)
+        _epoll.removeFd(cgi->getInputWriteFd());
+
+    for (std::vector<CGIContext*>::iterator it = _cgiContexts.begin();
+         it != _cgiContexts.end(); ++it)
+    {
+        if (*it == cgi)
+        {
+            _cgiContexts.erase(it);
+            break;
+        }
+    }
+    delete cgi;
+}
+
 void Server::checkIdleTimeouts()
 {
     std::vector<int> idleFds;
@@ -779,6 +864,20 @@ void Server::checkIdleTimeouts()
         ClientConnection* client = *it;
         if (client->getVhost() == NULL)
             continue;
+
+        bool hasActiveCgi = false;
+        for (std::vector<CGIContext*>::const_iterator cgiIt = _cgiContexts.begin();
+             cgiIt != _cgiContexts.end(); ++cgiIt)
+        {
+            if ((*cgiIt)->getClient() == client)
+            {
+                hasActiveCgi = true;
+                break;
+            }
+        }
+        if (hasActiveCgi)
+            continue;
+
         time_t timeout = static_cast<time_t>(client->getVhost()->getTimeout());
         if (client->isIdle(timeout) && client->getWriteBuffer() == NULL)
             idleFds.push_back(client->getSocketFd());

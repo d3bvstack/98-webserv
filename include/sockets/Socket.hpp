@@ -12,10 +12,12 @@
 
 #pragma once
 
+#include "EventTarget.hpp"
+
 # define SOCKET_TYPE_LISTEN 0
 # define SOCKET_TYPE_CLIENT 1
 
-class Socket
+class Socket : public EventTarget
 {
 	protected:
 		int _socketFd;

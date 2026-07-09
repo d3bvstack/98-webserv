@@ -21,6 +21,7 @@ OBJDIR = obj
 
 SRCS =	src/main.cpp \
 		src/Server.cpp \
+		src/CGIContext.cpp \
 		src/server_utils.cpp \
 		src/Vhost.cpp \
 		src/Location.cpp \

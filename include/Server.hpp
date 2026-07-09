@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/09 21:05:04 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/10 00:41:33 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include "Vhost.hpp"
 #include "ConfigParser.hpp"
 #include "Epoll.hpp"
+#include "EventTarget.hpp"
+#include "CGIContext.hpp"
 
 class ClientConnection;
 class ListeningSocket;
@@ -37,12 +39,14 @@ class Server
         std::vector<ClientConnection*>   _clientConnections;
 
         Epoll                            _epoll;
+        std::vector<CGIContext*>         _cgiContexts;
 
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
         void acceptNewConnection(Socket* listenSocket);
         void disconnectClient(int clientFd);
         void handleClientIncomingEvent(ClientConnection* client);
         void handleClientOutgoingEvent(ClientConnection* client);
+        void cleanupCgiContext(CGIContext* cgi);
 
     public:
         Server();
@@ -63,6 +67,7 @@ class Server
         void handleIncomingEvents(int nEvents);
         void handleOutgoingEvents(int nEvents);
         void processPendingRequests();
+        void checkCgiChildren();
         void checkIdleTimeouts();
 
         void debugServer() const;

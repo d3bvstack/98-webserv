@@ -24,7 +24,6 @@ namespace server_utils
     Response buildRedirectResponse(const Location& location, const ClientConnection* client);
     Response buildMethodNotAllowedResponse(const Location& location, const Vhost& vhost, const ClientConnection* client);
     bool isCgiRequest(const Vhost& vhost, const Request& request);
-    Response buildCgiResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client);
 
     Response buildGetResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client);
     Response buildPostResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client);
