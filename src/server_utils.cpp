@@ -521,18 +521,32 @@ namespace server_utils
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
 
         // Create one pipe for request body input and one for CGI output.
-        int inputPipe[2];
-        int outputPipe[2];
+        int inputPipe[2] = {-1, -1};
+        int outputPipe[2] = {-1, -1};
         if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
+        {
+            if (inputPipe[0] != -1) 
+                close(inputPipe[0]);
+            if (inputPipe[1] != -1) 
+                close(inputPipe[1]);
+            if (outputPipe[0] != -1) 
+                close(outputPipe[0]);
+            if (outputPipe[1] != -1) 
+                close(outputPipe[1]);
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+        }
 
         pid_t pid = fork();
         if (pid == -1)
         {
-            close(inputPipe[0]);
-            close(inputPipe[1]);
-            close(outputPipe[0]);
-            close(outputPipe[1]);
+            if (inputPipe[0] != -1) 
+                close(inputPipe[0]);
+            if (inputPipe[1] != -1) 
+                close(inputPipe[1]);
+            if (outputPipe[0] != -1) 
+                close(outputPipe[0]);
+            if (outputPipe[1] != -1) 
+                close(outputPipe[1]);
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
         }
 
@@ -543,10 +557,14 @@ namespace server_utils
             dup2(outputPipe[1], STDOUT_FILENO);
             dup2(outputPipe[1], STDERR_FILENO);
 
-            close(inputPipe[0]);
-            close(inputPipe[1]);
-            close(outputPipe[0]);
-            close(outputPipe[1]);
+            if (inputPipe[0] != -1) 
+                close(inputPipe[0]);
+            if (inputPipe[1] != -1) 
+                close(inputPipe[1]);
+            if (outputPipe[0] != -1) 
+                close(outputPipe[0]);
+            if (outputPipe[1] != -1) 
+                close(outputPipe[1]);
 
             std::vector<std::string> envStrings;
             // Populate the CGI environment expected by the script.
@@ -605,8 +623,10 @@ namespace server_utils
         }
 
         // Parent process: send the request body to the CGI script.
-        close(inputPipe[0]);
-        close(outputPipe[1]);
+        if (inputPipe[0] != -1) 
+            close(inputPipe[0]);
+        if (outputPipe[1] != -1) 
+            close(outputPipe[1]);
 
         const std::string& body = request.getBody();
         size_t written = 0;
@@ -617,17 +637,20 @@ namespace server_utils
                 break;
             written += static_cast<size_t>(bytesWritten);
         }
-        close(inputPipe[1]);
+        if (inputPipe[1] != -1) 
+            close(inputPipe[1]);
 
         // Read the CGI output before waiting so we do not deadlock on a full pipe.
         std::string rawOutput;
         int cgiStatus = 0;
         if (!collectCgiOutputWithTimeout(pid, outputPipe[0], &rawOutput, &cgiStatus))
         {
-            close(outputPipe[0]);
+            if (outputPipe[0] != -1) 
+                close(outputPipe[0]);
             return (applyConnectionPolicy(Response::createErrorResponse(504, vhost), client));
         }
-        close(outputPipe[0]);
+        if (outputPipe[0] != -1) 
+            close(outputPipe[0]);
 
         if (WIFEXITED(cgiStatus) == 0 || WEXITSTATUS(cgiStatus) != 0)
             return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
