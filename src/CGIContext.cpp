@@ -17,6 +17,89 @@ namespace
 {
     const unsigned int CGI_TIMEOUT_SECONDS = 5;
 
+    std::string joinPaths(const std::string& left, const std::string& right)
+    {
+        if (left.empty())
+            return (right);
+        if (right.empty())
+            return (left);
+        if (left[left.length() - 1] == '/' && right[0] == '/')
+            return (left + right.substr(1));
+        if (left[left.length() - 1] != '/' && right[0] != '/')
+            return (left + "/" + right);
+        return (left + right);
+    }
+
+    bool matchesCgiExtension(const std::string& requestPath, const std::string& extension, size_t* scriptEndPos)
+    {
+        size_t searchPos = 0;
+
+        while (true)
+        {
+            size_t extensionPos = requestPath.find(extension, searchPos);
+            if (extensionPos == std::string::npos)
+                return (false);
+
+            size_t extensionEndPos = extensionPos + extension.length();
+            if (extensionEndPos == requestPath.length() || requestPath[extensionEndPos] == '/')
+            {
+                *scriptEndPos = extensionEndPos;
+                return (true);
+            }
+
+            searchPos = extensionPos + 1;
+        }
+    }
+
+    bool splitCgiPath(const Vhost& vhost, const Request& request,
+                      std::string& scriptUrlPath, std::string& pathInfo)
+    {
+        const std::map<std::string, std::string>& cgi = vhost.getCGI();
+        const std::string& requestPath = request.getPath();
+        size_t bestScriptEndPos = 0;
+        bool found = false;
+
+        for (std::map<std::string, std::string>::const_iterator it = cgi.begin(); it != cgi.end(); ++it)
+        {
+            size_t scriptEndPos = 0;
+            if (matchesCgiExtension(requestPath, it->first, &scriptEndPos))
+            {
+                if (!found || scriptEndPos > bestScriptEndPos)
+                {
+                    bestScriptEndPos = scriptEndPos;
+                    found = true;
+                }
+            }
+        }
+
+        if (!found)
+            return (false);
+
+        scriptUrlPath = requestPath.substr(0, bestScriptEndPos);
+        pathInfo = requestPath.substr(bestScriptEndPos);
+        return (true);
+    }
+
+    std::string resolveFilesystemPathFromUrlPath(const Location& location, const std::string& requestPath)
+    {
+        std::string urlPath = requestPath;
+        const std::string& locationPath = location.getPath();
+
+        if (!locationPath.empty() && urlPath.compare(0, locationPath.length(), locationPath) == 0)
+            urlPath.erase(0, locationPath.length());
+
+        if (urlPath.empty())
+            urlPath = "/";
+
+        if (!urlPath.empty() && urlPath[0] == '/')
+            urlPath.erase(0, 1);
+
+        std::string resolved = joinPaths(location.getRoot(), urlPath);
+        if (resolved.length() > 1 && resolved[resolved.length() - 1] == '/')
+            resolved.erase(resolved.length() - 1);
+        return (resolved);
+    }
+
     std::string normalizeLineEndings(const std::string& input)
     {
         std::string normalized;
@@ -113,7 +196,12 @@ namespace
 
     std::string findCgiInterpreter(const Vhost& vhost, const Request& request)
     {
-        std::string requestExtension = getRequestExtension(request.getPath());
+        std::string scriptUrlPath;
+        std::string pathInfo;
+        if (!splitCgiPath(vhost, request, scriptUrlPath, pathInfo))
+            return ("");
+
+        std::string requestExtension = getRequestExtension(scriptUrlPath);
         const std::map<std::string, std::string>& cgi = vhost.getCGI();
         std::map<std::string, std::string>::const_iterator it = cgi.find(requestExtension);
         if (it == cgi.end())
@@ -169,7 +257,16 @@ bool CGIContext::start(Epoll& epoll)
         return (false);
     }
 
-    std::string scriptPath = server_utils::resolveFilesystemPath(_location, _request);
+    std::string scriptUrlPath;
+    std::string pathInfo;
+    if (!splitCgiPath(_vhost, _request, scriptUrlPath, pathInfo))
+    {
+        _state = ERROR_STATE;
+        _errorStatusCode = 500;
+        return (false);
+    }
+
+    std::string scriptPath = resolveFilesystemPathFromUrlPath(_location, scriptUrlPath);
 
     {
         struct stat st;
@@ -216,7 +313,8 @@ bool CGIContext::start(Epoll& epoll)
         envStrings.push_back("REQUEST_METHOD=" + _request.getMethod());
         envStrings.push_back("QUERY_STRING=" + _request.getQueryString());
         envStrings.push_back("SCRIPT_FILENAME=" + scriptPath);
-        envStrings.push_back("SCRIPT_NAME=" + _request.getPath());
+        envStrings.push_back("SCRIPT_NAME=" + scriptUrlPath);
+        envStrings.push_back("PATH_INFO=" + pathInfo);
         envStrings.push_back("REQUEST_URI=" + _request.getPath());
         envStrings.push_back("SERVER_PROTOCOL=" + _request.getVersion());
         envStrings.push_back("SERVER_SOFTWARE=98Webserv");

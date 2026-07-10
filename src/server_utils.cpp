@@ -132,6 +132,24 @@ namespace
         return (html.str());
     }
 
+    bool matchesCgiExtension(const std::string& requestPath, const std::string& extension)
+    {
+        size_t searchPos = 0;
+
+        while (true)
+        {
+            size_t extensionPos = requestPath.find(extension, searchPos);
+            if (extensionPos == std::string::npos)
+                return (false);
+
+            size_t extensionEndPos = extensionPos + extension.length();
+            if (extensionEndPos == requestPath.length() || requestPath[extensionEndPos] == '/')
+                return (true);
+
+            searchPos = extensionPos + 1;
+        }
+    }
+
 
 }
 
@@ -291,7 +309,7 @@ namespace server_utils
 
         for (std::map<std::string, std::string>::const_iterator it = cgi.begin(); it != cgi.end(); ++it)
         {
-            if (hasSuffix(request.getPath(), it->first))
+            if (matchesCgiExtension(request.getPath(), it->first))
                 return (true);
         }
         return (false);
