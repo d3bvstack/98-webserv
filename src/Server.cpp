@@ -419,7 +419,7 @@ static bool isValidMethod(const std::string& requestStr)
 bool Server::handleClientIncomingEvent(ClientConnection* client)
 {
     int clientFd = client->getSocketFd();
-    char buffer[4096];
+    char buffer[65536];
     ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 
     if (bytesRead <= 0)

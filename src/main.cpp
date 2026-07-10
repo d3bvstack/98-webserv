@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/24 15:22:10 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/10 15:01:45 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,6 @@ int main(int argc, char** argv)
             }
             webserver->checkCgiChildren();
             webserver->checkIdleTimeouts();
-            usleep(100000);
         }
 
         delete webserver;
