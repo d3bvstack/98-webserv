@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/10 00:28:38 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/10 12:23:34 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -414,8 +414,9 @@ static bool isValidMethod(const std::string& requestStr)
  * builds a Request object from it and adds to the pending requests queue.
  *
  * @param client
+ * @return bool `true` if client has been disconnected, `false` if client not disconnected
  */
-void Server::handleClientIncomingEvent(ClientConnection* client)
+bool Server::handleClientIncomingEvent(ClientConnection* client)
 {
     int clientFd = client->getSocketFd();
     char buffer[4096];
@@ -424,7 +425,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
     if (bytesRead <= 0)
     {
         disconnectClient(clientFd);
-        return;
+        return true;
     }
 
     client->updateActivity();
@@ -440,9 +441,9 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
             Response response = Response::createErrorResponse(431, *(client->getVhost()));
             response.setConnectionClose();
             client->addPendingResponse(response);
-            return;
+            return false;
         }
-        return;
+        return false;
     }
 
     std::string headers = fullBuffer.substr(0, headerEndPos);
@@ -455,7 +456,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
         Response response = Response::createErrorResponse(400, *(client->getVhost()));
         response.setConnectionClose();
         client->addPendingResponse(response);
-        return;
+        return false;
     }
 
     bool isChunked = (headers.find("Transfer-Encoding: chunked") != std::string::npos);
@@ -468,7 +469,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
         Response response = Response::createErrorResponse(400, *(client->getVhost()));
         response.setConnectionClose();
         client->addPendingResponse(response);
-        return;
+        return false;
     }
 
     else if (isChunked)
@@ -487,7 +488,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
                 Response response = Response::createErrorResponse(413, *(client->getVhost()));
                 response.setConnectionClose();
                 client->addPendingResponse(response);
-                return;
+                return false;
             }
 
             std::string cleanHeaders = headers;
@@ -517,7 +518,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
                 Response response = Response::createErrorResponse(413, *(client->getVhost()));
                 response.setConnectionClose();
                 client->addPendingResponse(response);
-                return;
+                return false;
             }
             std::cerr << "[INFO] Chunked headers received, waiting for final chunk on fd " << clientFd << std::endl;
         }
@@ -548,7 +549,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
             Response response = Response::createErrorResponse(413, *(client->getVhost()));
             response.setConnectionClose();
             client->addPendingResponse(response);
-            return;
+            return false;
         }
 
         if (body.length() >= static_cast<size_t>(contentLength))
@@ -594,6 +595,7 @@ void Server::handleClientIncomingEvent(ClientConnection* client)
             client->addPendingResponse(response);
         }
     }
+    return false;
 }
 
 /**
@@ -618,13 +620,18 @@ void Server::handleIncomingEvents(int activeEventsCount)
         {
             if (typeid(*target) == typeid(CGIContext))
             {
+                if (eventTypes & EPOLLERR)
                 static_cast<CGIContext*>(target)->handleError(_epoll);
+                else
+                    static_cast<CGIContext*>(target)->onCgiOutputReadable(_epoll);
+
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
                 ClientConnection* client = static_cast<ClientConnection*>(target);
                 std::cerr << "[ERROR] Socket error or hangup on fd " << client->getSocketFd() << std::endl;
                 disconnectClient(client->getSocketFd());
+                events[i].data.ptr = NULL;
             }
             else if (typeid(*target) == typeid(ListeningSocket))
             {
@@ -647,7 +654,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
-                handleClientIncomingEvent(static_cast<ClientConnection*>(target));
+                if (handleClientIncomingEvent(static_cast<ClientConnection*>(target)))
+                    events[i].data.ptr = NULL;
             }
         }
     }

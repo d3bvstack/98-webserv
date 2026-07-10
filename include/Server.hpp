@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/10 00:41:33 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/10 11:54:32 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ class Server
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
         void acceptNewConnection(Socket* listenSocket);
         void disconnectClient(int clientFd);
-        void handleClientIncomingEvent(ClientConnection* client);
+        bool handleClientIncomingEvent(ClientConnection* client);
         void handleClientOutgoingEvent(ClientConnection* client);
         void cleanupCgiContext(CGIContext* cgi);
 
