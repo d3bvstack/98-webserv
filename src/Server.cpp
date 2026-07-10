@@ -447,7 +447,8 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
     }
 
     std::string headers = fullBuffer.substr(0, headerEndPos);
-    std::string body = fullBuffer.substr(headerEndPos + 4); // +4 to skip \r\n\r\n
+    size_t bodyOffset = headerEndPos + 4; // skip \r\n\r\n
+    size_t bodyLen = (fullBuffer.length() > bodyOffset) ? fullBuffer.length() - bodyOffset : 0;
     bool hasHttpHeader = (headers.find("HTTP/") != std::string::npos);
     if (!isValidMethod(headers) || !hasHttpHeader)
     {
@@ -474,9 +475,10 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
 
     else if (isChunked)
     {
-        bool isLastChunkReceived = (body.find("0\r\n\r\n") != std::string::npos);
+        bool isLastChunkReceived = (fullBuffer.find("0\r\n\r\n", bodyOffset) != std::string::npos);
         if (isLastChunkReceived)
         {
+            std::string body = fullBuffer.substr(bodyOffset);
             std::cerr << "[INFO] Complete chunked HTTP request received on fd " << clientFd << std::endl;
 
             std::string unchunkedBody = decodeChunkedBody(body);
@@ -511,7 +513,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
         }
         else
         {
-            if (body.length() > client->getVhost()->getMaxBodySize() * 2)
+            if (bodyLen > client->getVhost()->getMaxBodySize() * 2)
             {
                 std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
                 client->removeFromReadBuffer(std::string::npos);
@@ -525,7 +527,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
     }
     else if (hasContentLength)
     {
-        int contentLength = 0;
+        long contentLength = 0;
         size_t pos = headers.find("Content-Length:");
         if (pos != std::string::npos)
         {
@@ -552,7 +554,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
             return false;
         }
 
-        if (body.length() >= static_cast<size_t>(contentLength))
+        if (bodyLen >= static_cast<size_t>(contentLength))
         {
             std::cerr << "[INFO] Complete Content-Length HTTP request received on fd " << clientFd << std::endl;
             try
