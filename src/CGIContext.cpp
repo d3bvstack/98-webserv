@@ -124,10 +124,19 @@ namespace
 
 CGIContext::CGIContext(const Vhost& vhost, const Location& location,
                        const Request& request, ClientConnection* client)
-    : _pid(-1), _state(WRITING_BODY), _inputOffset(0), _outputClosed(false),
-      _childExited(false), _childStatus(0),
-      _vhost(vhost), _location(location), _request(request), _client(client),
-      _response(200), _errorStatusCode(0), _startTime(0)
+    : _pid(-1),
+    _state(WRITING_BODY),
+    _inputOffset(0),
+    _outputClosed(false),
+    _childExited(false),
+    _childStatus(0),
+    _vhost(vhost),
+    _location(location),
+    _request(request),
+    _client(client),
+    _response(200),
+    _errorStatusCode(0),
+    _startTime(0)
 {
     _inputPipe[0] = -1;
     _inputPipe[1] = -1;
@@ -182,6 +191,10 @@ bool CGIContext::start(Epoll& epoll)
     _pid = fork();
     if (_pid == -1)
     {
+        close(_inputPipe[0]);
+        close(_inputPipe[1]);
+        close(_outputPipe[0]);
+        close(_outputPipe[1]);
         _state = ERROR_STATE;
         _errorStatusCode = 500;
         return (false);
