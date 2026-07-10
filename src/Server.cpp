@@ -676,9 +676,15 @@ void Server::handleClientOutgoingEvent(ClientConnection* client)
         const std::vector<Response>& pending = client->getPendingResponses();
         if (!pending.empty())
         {
-            client->setWritePendingBuffer(pending.front());
+            const Response& response = pending.front();
+            std::cerr << "[INFO] Response sent on fd " << client->getSocketFd()
+                      << ": " << response.getVersion() << " "
+                      << response.getStatusCode() << " "
+                      << response.getReason() << std::endl;
+            response.debugResponse();
+            client->setWritePendingBuffer(response);
             client->sendWritePendingBuffer();
-            client->removePendingResponse(pending.front());
+            client->removePendingResponse(response);
             client->updateActivity();
         }
     }

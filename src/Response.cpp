@@ -65,14 +65,11 @@ Response Response::createErrorResponse(int code, const Vhost& vhost)
         {
             response.setBody(content);
             response.setHeader("Content-Type", "text/html");
-            response.debugResponse();
             return (response);
         }
     }
     response.setBody(response.codeToReason(code));
     response.setHeader("Content-Type", "text/plain");
-
-    response.debugResponse();
     return (response);
 }
 

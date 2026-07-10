@@ -47,6 +47,10 @@ class Response
         void setConnectionClose();
         void setConnectionKeepAlive(uint64_t timeout);
 
+        int getStatusCode() const { return (_statusCode); };
+        const std::string& getReason() const { return (_reason); };
+        const std::string& getVersion() const { return (_version); };
+
         std::string toString() const;
 
         void debugResponse() const;
