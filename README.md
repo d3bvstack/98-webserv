@@ -1,19 +1,58 @@
-*This project has been created as part of the 42 curriculum by **dbarba-v** ([**d3bvstack** on github.com](https://github.com/d3bvstack/))*
 
+*This project was created as part of the 42 curriculum by **dbarba-v** ([**d3bvstack** on github.com](https://github.com/d3bvstack/)), **gamorcil** ([**byte206** on github.com](https://github.com/byte206)), and **atabarea** ([**artabarean** on github.com](https://github.com/artabarean))*
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/d3bvstack">
+        <img src="https://github.com/d3bvstack.png" width="80" style="border-radius:10%"><br/>
+        <sub><b>dbarba-v</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Byte206">
+        <img src="https://github.com/Byte206.png" width="80" style="border-radius:10%"><br/>
+        <sub><b>gamorcil</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/artabarean">
+        <img src="https://github.com/artabarean.png" width="80" style="border-radius:10%"><br/>
+        <sub><b>atabarea</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 # 98Webserv 
 [![C++](https://img.shields.io/badge/C++-%2300599C.svg?logo=c%2B%2B&logoColor=white)](#)
 
 **98Webserv** is a handcrafted HTTP server built in C++98. The project covers low-level systems and network programming, focusing on areas such as server configuration parsing, sockets, asynchronous I/O, event polling, TCP/IP and HTTP protocols, request-to-response lifecycles, and CGI execution.
 
-<img alt="98webserv cover image" src="https://github.com/user-attachments/assets/d021c065-767b-42c5-ae13-b8b9407b1e5a" />
-
-
+<img alt="98webserv cover image" src=".docs/98webserv.png" />
 
 ## Table of Contents
 - [Description](#description)
+  - [Configuration](#configuration)
+  - [Connection Management and Event Loop](#connection-management-and-event-loop)
+  - [Processing Request Logic](#processing-request-logic)
+  - [CGI Logic](#cgi-logic)
+  - [Response Transmission](#response-transmission)
 - [Instructions](#instructions)
+  - [Prerequisites](#prerequisites)
+  - [1. Build](#1-build)
+  - [2. Run](#2-run)
+  - [3. Connect](#3-connect)
+  - [4. Clean](#4-clean)
 - [Resources](#resources)
+  - [Network Programming](#network-programming)
+  - [Core HTTP \& Protocol Specifications](#core-http--protocol-specifications)
+  - [Guides \& Architecture](#guides--architecture)
+  - [HTTP Headers, Methods, \& Status Reference](#http-headers-methods--status-reference)
+  - [Web Server Guides (NGINX)](#web-server-guides-nginx)
+  - [Caching, Authentication, \& Cookie Management](#caching-authentication--cookie-management)
+    - [CGI](#cgi)
+- [AI Usage](#ai-usage)
 
 ## Description
 
@@ -21,7 +60,7 @@
 
 ### Configuration
 
-The server loads ini-like configuration files (`.conf`), which can be passed as command-line arguments or automatically detected within the `.conf/` directory. A single configuration file can declare one or multiple vhosts.
+The server loads configuration files (`.conf`) written in an ini-like syntax. These files can be passed as arguments or automatically detected within the `.conf/` directory.
 
 *   **Virtual Hosts:** Modeled by the [`Vhost`](include/Vhost.hpp#L22) class, virtual hosts define settings such as server name, host, port, maximum body size, custom error pages, and CGI extension mappings. Syntax errors within a virtual host block are isolated, meaning an invalid host configuration is rejected individually without preventing other valid hosts from loading.
 *   **Routing Rules:** Within each virtual host, [`Location`](include/Location.hpp#L22) blocks define URL routing rules. These specify the matching path, a document root or redirection target, permitted HTTP methods, directory indexing, default index files, and upload directories.
@@ -34,58 +73,85 @@ During initialization, the server creates a listening socket for each unique hos
 
 The core event loop, driven by [`Epoll::waitWrapper`](src/Epoll.cpp#L72), dispatches I/O events as they occur:
 
-1.  **New Connections:** When a listening socket detects an incoming connection, the server accepts it and wraps it in a [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) object. This connection is then registered with `epoll` for both `EPOLLIN` and `EPOLLOUT` notifications.
-2.  **Request Parsing and Validation:** Incoming data accumulates in a buffer dedicated to that connection. The server verifies that the data begins with a valid HTTP request header.
-    *   **Header Limits:** The server enforces an 8 KB limit on the total header size. If exceeded, it responds with `431 Request Header Fields Too Large`.
-    *   **Body Limits:** The server rejects request bodies that exceed the virtual host's configured `max_body_size` with a `413 Payload Too Large` status. 
-    *   These checks are performed progressively while data is being read from the socket, allowing the server to reject oversized requests before buffering the entire payload.
-3.  **Queueing:** Once a request is successfully received and parsed, the server instantiates a [`Request`](include/Request.hpp#L18) object and queues it for handling via [`Server::processPendingRequests`](src/Server.cpp#L618). If validation fails early, an error [`Response`](include/Response.hpp#L22) is generated and queued directly for transmission.
+1.  **New Connections:** When a listening socket detects an incoming connection, the server accepts it, wraps it in a [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) object, and registers it with `epoll` for `EPOLLIN` and `EPOLLOUT` events.
+2.  **Request Parsing and Validation:** Incoming data is read into a connection-specific buffer. The server verifies that the data begins with a valid HTTP header.
+    *   **Header Limits:** Headers are limited to 8 KB. If exceeded, the server returns a `431 Request Header Fields Too Large` response.
+    *   **Body Limits:** The server rejects request bodies exceeding the configured `max_body_size` with a `413 Payload Too Large` status.
+    *   These checks are performed progressively during the read phase to reject oversized requests before buffering the entire payload.
+3.  **Queueing:** Once a request is successfully parsed, a [`Request`](include/Request.hpp#L18) object is created and queued for handling. If initial validation fails, an error [`Response`](include/Response.hpp#L22) is generated and queued directly for transmission.
 
-[Processing requests logic]
-[CGI logic]
+### Processing Request Logic
+
+During each event loop iteration, [`Server::processPendingRequests`](src/Server.cpp#L751) processes queued requests. Each [`ClientConnection`](include/sockets/ClientConnection.hpp#L25) maintains its own queue of parsed [`Request`](include/Request.hpp#L18) objects, which the server processes in order:
+
+1.  **Location Resolution:** The request path is matched against the virtual host's `Location` blocks via [`server_utils::findBestLocation`](src/server_utils.cpp#L196), selecting the longest matching prefix.
+2.  **Request Dispatching:** The request is handled based on the matching [`Location`](include/Location.hpp#L22) rules:
+    *   **No Match:** Yields a `404 Not Found` response.
+    *   **Method Not Allowed:** If the location does not support the HTTP method, the server returns `405 Method Not Allowed` with an `Allow` header listing permitted methods.
+    *   **CGI Request:** Detected by [`server_utils::isCgiRequest`](src/server_utils.cpp#L312). The request is handed to a [`CGIContext`](include/CGIContext.hpp#L15) and processed asynchronously.
+    *   **GET:** Resolves the file under the location root, processes redirections, or serves directory listings (if `autoindex` is enabled).
+    *   **POST:** Saves the payload to the configured `upload_store` (`201 Created`) or echoes the body back (`200 OK`).
+    *   **DELETE:** Removes the target file (`200 OK`) or returns appropriate error codes on failure.
+3.  **Connection Policy:** The server applies the connection policy via [`server_utils::applyConnectionPolicy`](src/server_utils.cpp#L284), setting `Connection: keep-alive` or `Connection: close` based on client headers and configuration.
+4.  **Error Handling:** Exceptions thrown during request handling degrade to a `500 Internal Server Error`. Finished responses are queued for client transmission, and the handled request is dequeued.
+
+### CGI Logic
+
+CGI execution is managed by the [`CGIContext`](include/CGIContext.hpp#L15) class, which routes requests to external scripts using `fork` and `execve` while integrated with the non-blocking `epoll` loop.
+
+*   **Routing:** The request path is matched against the host's CGI extension map. [`splitCgiPath`](src/CGIContext.cpp#L55) extracts the script path and `PATH_INFO`, mapping them to the filesystem via [`resolveFilesystemPathFromUrlPath`](src/CGIContext.cpp#L84).
+*   **Process Execution:** The server creates two `socketpair` pipes for the script's input and output, then calls `fork()`. The child process sets up the CGI environment variables, redirects standard streams, and calls `execve`. The parent process registers the pipe descriptors with `epoll` and tracks the context.
+*   **Asynchronous I/O:** The execution transitions through non-blocking states (`WRITING_BODY` → `READING_OUTPUT` → `COMPLETE`/`ERROR_STATE`). Request data is written to the script's input, and the script's output is read progressively.
+*   **Completion and Cleanup:** During each tick, [`Server::checkCgiChildren`](src/Server.cpp#L852) calls `waitpid` with `WNOHANG` to monitor the child process. A 5-second timeout is enforced, resulting in a `504 Gateway Timeout` on expiration. Once finished, the output is parsed, headers are processed, the response is queued, and the resources are cleaned up.
 
 ### Response Transmission
 
-Once processed, the [`Response`](include/Response.hpp#L22) is serialized and written back to the client socket when `epoll` signals that the socket is writable (`EPOLLOUT`). 
+Once a response is ready, it is serialized and written to the client socket when `epoll` signals that the socket is writable (`EPOLLOUT`).
 
-*   **Non-blocking Transmission:** If a response is too large to write in a single system call, the remaining unsent data is retained in a buffer. Transmission resumes upon the next `EPOLLOUT` event.
-*   **Completion:** This cycle repeats until all queued responses for the connection have been fully transmitted.
+*   **Non-blocking Writes:** If a response cannot be sent in a single write operation, the remaining data is stored in a buffer and transmitted during subsequent `EPOLLOUT` events.
+*   **Completion:** The process continues until all queued responses for the connection have been fully sent.
+
+---
 
 ## Instructions
 
 ### Prerequisites
 
-A C++98 compiler (`c++`), `make`, and a Linux environment with `epoll` support.
+* A C++98 compliant compiler (`c++` or `g++`)
+* `make`
+* A Linux-based environment (for `epoll` support)
 
 ### 1. Build
+
+To compile the project:
 
 ```sh
 make
 ```
 
-Or as an explicit target:
+Or target the executable directly:
 
 ```sh
 make webserv
 ```
 
-The binary is placed at `bin/webserv`.
+The binary will be created at `bin/webserv`.
 
 ### 2. Run
 
-Start the server with default configs (loads all `.conf` files from the `.conf/` directory):
+To start the server with the default configuration (which loads all `.conf` files in the `.conf/` directory):
 
 ```sh
 make run
 ```
 
-Or specify one or more configuration files explicitly:
+To run with specific configuration files:
 
 ```sh
 make run path/to/config1.conf path/to/config2.conf
 ```
 
-The path to the binary also works:
+Or run the binary directly:
 
 ```sh
 ./bin/webserv
@@ -93,27 +159,21 @@ The path to the binary also works:
 
 ### 3. Connect
 
-Once the server logs that it is listening, open a browser and navigate to:
-
-```
-http://<host>:<port>
-```
-
-For example, if the server listens on `127.0.0.1:8080`:
+Once the server is running, navigate to the configured host and port in your browser:
 
 ```
 http://localhost:8080
 ```
 
-Alternatively, connect via telnet and send a raw HTTP request:
+Alternatively, you can test the connection using `telnet` or `curl`:
 
 ```sh
 telnet localhost 8080
 ```
 
-Then paste the following (end with a blank line):
+Then send a basic HTTP request:
 
-```
+```http
 GET / HTTP/1.1
 Host: localhost
 
@@ -121,10 +181,14 @@ Host: localhost
 
 ### 4. Clean
 
+To clean up build artifacts:
+
 ```sh
-make clean      # Remove object files
-make fclean     # Remove object files and the binary
+make clean      # Removes object files
+make fclean     # Removes object files and the compiled binary
 ```
+
+---
 
 ## Resources
 
@@ -163,3 +227,15 @@ make fclean     # Remove object files and the binary
 * [MDN Web Docs: HTTP Caching Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching)
 * [MDN Web Docs: HTTP Authentication Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication)
 * [MDN Web Docs: Using HTTP Cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies)
+
+### CGI
+
+* [RFC 3875: The Common Gateway Interface](https://datatracker.ietf.org/doc/html/rfc3875)
+* [Universidad de Oviedo: The Common Gateway Interface](https://www6.uniovi.es/~antonio/ncsa_httpd/cgi/overview.html)
+* [Philip Bohun: The Magic of cgi-bin](https://www.youtube.com/watch?v=NwRVJX0Ieno)
+
+
+### AI usage
+
+- Restructuring, styling and extending both `.md` documentation and code comments.
+- Fetching, summarising and clarifying webserv related topics.
