@@ -217,6 +217,9 @@ namespace server_utils
                 }
             }
 
+            if (!matches && requestPath + "/" == locationPath)
+                matches = true;
+
             if (matches && locationPath.length() >= bestLength)
             {
                 bestLocation = &(*it);
@@ -256,6 +259,9 @@ namespace server_utils
     {
         const std::string& locationPath = location.getPath();
         std::string requestPath = request.getPath();
+
+        if (requestPath + "/" == locationPath)
+            return ("/");
 
         if (!locationPath.empty() && requestPath.compare(0, locationPath.length(), locationPath) == 0)
         {
@@ -361,6 +367,8 @@ namespace server_utils
                     response.setBody(listing);
                     return (applyConnectionPolicy(response, client));
                 }
+                if (location.isDefaultsSet())
+                    return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
                 return (applyConnectionPolicy(Response::createErrorResponse(403, vhost), client));
             }
         }

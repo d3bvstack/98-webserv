@@ -314,7 +314,7 @@ bool CGIContext::start(Epoll& epoll)
         envStrings.push_back("QUERY_STRING=" + _request.getQueryString());
         envStrings.push_back("SCRIPT_FILENAME=" + scriptPath);
         envStrings.push_back("SCRIPT_NAME=" + scriptUrlPath);
-        envStrings.push_back("PATH_INFO=" + pathInfo);
+        envStrings.push_back("PATH_INFO=" + _request.getPath());
         envStrings.push_back("REQUEST_URI=" + _request.getPath());
         envStrings.push_back("SERVER_PROTOCOL=" + _request.getVersion());
         envStrings.push_back("SERVER_SOFTWARE=98Webserv");
