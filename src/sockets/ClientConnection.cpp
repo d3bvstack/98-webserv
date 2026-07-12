@@ -89,9 +89,16 @@ void ClientConnection::sendWritePendingBuffer()
     }
     const char* data = _writePendingBuffer.data() + _writePendingOffset;
     size_t remaining = _writePendingBuffer.size() - _writePendingOffset;
-    int bytesSent = send(_socketFd, data, remaining, MSG_NOSIGNAL);
+    ssize_t bytesSent = send(_socketFd, data, remaining, MSG_NOSIGNAL);
     if (bytesSent > 0)
-        _writePendingOffset += bytesSent;
+    {
+        _writePendingOffset += static_cast<size_t>(bytesSent);
+        return;
+    }
+    if (bytesSent <= 0)
+    {
+        return;
+    }
 }
 
 void ClientConnection::setWritePendingBuffer(const Response& response)

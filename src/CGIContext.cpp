@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <sys/epoll.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
@@ -278,7 +279,8 @@ bool CGIContext::start(Epoll& epoll)
         }
     }
 
-    if (pipe(_inputPipe) == -1 || pipe(_outputPipe) == -1)
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, _inputPipe) == -1
+        || socketpair(AF_UNIX, SOCK_STREAM, 0, _outputPipe) == -1)
     {
         _state = ERROR_STATE;
         _errorStatusCode = 500;
@@ -393,11 +395,20 @@ void CGIContext::onCgiInputWritable(Epoll& epoll)
     if (_state != WRITING_BODY || _inputPipe[1] == -1)
         return;
 
-    ssize_t bytesWritten = write(_inputPipe[1],
-                                 _requestBody.data() + _inputOffset,
-                                 _requestBody.length() - _inputOffset);
-    if (bytesWritten > 0)
-        _inputOffset += static_cast<size_t>(bytesWritten);
+    while (_inputOffset < _requestBody.length())
+    {
+        ssize_t bytesWritten = send(_inputPipe[1],
+                                    _requestBody.data() + _inputOffset,
+                                    _requestBody.length() - _inputOffset,
+                                    MSG_DONTWAIT);
+        if (bytesWritten > 0)
+        {
+            _inputOffset += static_cast<size_t>(bytesWritten);
+            continue;
+        }
+        if (bytesWritten <= 0)
+            break;
+    }
 
     if (_inputOffset >= _requestBody.length())
     {
@@ -412,24 +423,31 @@ void CGIContext::onCgiOutputReadable(Epoll& epoll)
     if (_state == COMPLETE || _state == ERROR_STATE || _outputPipe[0] == -1)
         return;
 
-    char buffer[4096];
-    ssize_t bytesRead = read(_outputPipe[0], buffer, sizeof(buffer));
-    if (bytesRead > 0)
+    char buffer[65536];
+    while (true)
     {
-        _outputBuffer.append(buffer, static_cast<size_t>(bytesRead));
-    }
-
-    if (bytesRead == 0)
-    {
-        closePipeEnd(epoll, _outputPipe[0]);
-        _outputPipe[0] = -1;
-        _outputClosed = true;
-
-        if (_childExited)
+        ssize_t bytesRead = recv(_outputPipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
+        if (bytesRead > 0)
         {
-            _state = COMPLETE;
-            buildResponse();
+            std::cerr << "Bytes read: " << bytesRead << std::endl;
+            _outputBuffer.append(buffer, static_cast<size_t>(bytesRead));
+            continue;
         }
+        if (bytesRead == 0)
+        {
+            closePipeEnd(epoll, _outputPipe[0]);
+            _outputPipe[0] = -1;
+            _outputClosed = true;
+
+            if (_childExited)
+            {
+                _state = COMPLETE;
+                buildResponse();
+            }
+            return;
+        }
+        if (bytesRead < 0)
+            break;
     }
 }
 
