@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/10 12:23:34 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/12 17:18:06 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -408,6 +408,25 @@ static bool isValidMethod(const std::string& requestStr)
             method == "CONNECT");
 }
 
+static uint64_t resolveBodyLimit(const ClientConnection* client, const std::string& headers)
+{
+    if (client == NULL || client->getVhost() == NULL)
+        return (1024 * 1024);
+
+    const Vhost& vhost = *(client->getVhost());
+    try
+    {
+        Request request(headers + "\r\n\r\n");
+        const Location* location = server_utils::findBestLocation(vhost, request.getPath());
+        if (location != NULL)
+            return (location->getMaxBodySize());
+    }
+    catch (const std::exception&)
+    {
+    }
+    return (vhost.getMaxBodySize());
+}
+
 /**
  * @brief Logic that handles incoming events from ativated fds tht correspond to client connections.
  * It handles reading from the fd, storing on buffer, checking general validity of HTTP request structure,
@@ -462,6 +481,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
 
     bool isChunked = (headers.find("Transfer-Encoding: chunked") != std::string::npos);
     bool hasContentLength = (headers.find("Content-Length:") != std::string::npos);
+    uint64_t maxBodySize = resolveBodyLimit(client, headers);
 
     if (isChunked && hasContentLength)
     {
@@ -483,7 +503,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
 
             std::string unchunkedBody = decodeChunkedBody(body);
 
-            if (unchunkedBody.length() > client->getVhost()->getMaxBodySize())
+            if (unchunkedBody.length() > maxBodySize)
             {
                 std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
                 client->removeFromReadBuffer(std::string::npos);
@@ -513,7 +533,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
         }
         else
         {
-            if (bodyLen > client->getVhost()->getMaxBodySize() * 2)
+            if (bodyLen > maxBodySize * 2)
             {
                 std::cerr << "[ERROR] Chunked body exceeds max body size on fd " << clientFd << std::endl;
                 client->removeFromReadBuffer(std::string::npos);
@@ -544,7 +564,7 @@ bool Server::handleClientIncomingEvent(ClientConnection* client)
             }
         }
 
-        if (static_cast<uint64_t>(contentLength) > client->getVhost()->getMaxBodySize())
+        if (static_cast<uint64_t>(contentLength) > maxBodySize)
         {
             std::cerr << "[ERROR] Request body exceeds max body size on fd " << clientFd << std::endl;
             client->removeFromReadBuffer(std::string::npos);
@@ -613,20 +633,21 @@ void Server::handleIncomingEvents(int activeEventsCount)
     for (int i = 0; i < activeEventsCount; ++i)
     {
         EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
-        uint32_t eventTypes = events[i].events;
-
         if (target == NULL)
             continue;
+
+        uint32_t eventTypes = events[i].events;
 
         if (eventTypes & (EPOLLERR | EPOLLHUP))
         {
             if (typeid(*target) == typeid(CGIContext))
             {
+                CGIContext* cgi = static_cast<CGIContext*>(target);
+                
                 if (eventTypes & EPOLLERR)
-                static_cast<CGIContext*>(target)->handleError(_epoll);
+                    cgi->handleError(_epoll);
                 else
-                    static_cast<CGIContext*>(target)->onCgiOutputReadable(_epoll);
-
+                    cgi->onCgiOutputReadable(_epoll);
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
@@ -656,7 +677,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
-                if (handleClientIncomingEvent(static_cast<ClientConnection*>(target)))
+                ClientConnection* client = static_cast<ClientConnection*>(target);
+                if (handleClientIncomingEvent(client))
                     events[i].data.ptr = NULL;
             }
         }
@@ -762,12 +784,6 @@ void Server::processPendingRequests()
                 {
                     std::cerr << "[INFO] Method not allowed on location" << std::endl;
                     response = server_utils::buildMethodNotAllowedResponse(*location, vhost, client);
-                    builtResponse = true;
-                }
-                else if (request.getBody().length() > location->getMaxBodySize())
-                {
-                    std::cerr << "[INFO] Request body larger than location limit" << std::endl;
-                    response = server_utils::applyConnectionPolicy(Response::createErrorResponse(413, vhost), client);
                     builtResponse = true;
                 }
                 else if (server_utils::isCgiRequest(vhost, request))
