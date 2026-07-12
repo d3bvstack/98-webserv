@@ -332,6 +332,11 @@ bool CGIContext::start(Epoll& epoll)
             std::stringstream lengthStream;
             lengthStream << _request.getBody().length();
             envStrings.push_back("CONTENT_LENGTH=" + lengthStream.str());
+
+            std::map<std::string, std::string>::const_iterator contentTypeIt =
+                _request.getHeaders().find("Content-Type");
+            if (contentTypeIt != _request.getHeaders().end())
+                envStrings.push_back("CONTENT_TYPE=" + contentTypeIt->second);
         }
 
         const std::map<std::string, std::string>& headers = _request.getHeaders();
