@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/09 19:00:46 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/13 22:03:43 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ Epoll::~Epoll()
     }
 }
 
-void Epoll::addListeningSocket(uint32_t fd, void* ctx)
+void Epoll::addListeningSocket(int fd, void* ctx)
 {
     epoll_event event;
     event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
@@ -56,7 +56,7 @@ void Epoll::addListeningSocket(uint32_t fd, void* ctx)
     std::cerr << "[INFO] Listening socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::addClientSocket(uint32_t fd, void* ctx)
+void Epoll::addClientSocket(int fd, void* ctx)
 {
     epoll_event event;
     event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP;
@@ -72,7 +72,7 @@ void Epoll::addClientSocket(uint32_t fd, void* ctx)
     std::cerr << "[INFO] Client socket with fd " << fd << " added to epoll" << std::endl;
 }
 
-void Epoll::addFd(uint32_t fd, uint32_t events, void* ctx)
+void Epoll::addFd(int fd, uint32_t events, void* ctx)
 {
     epoll_event event;
     event.events = events;
@@ -86,7 +86,7 @@ void Epoll::addFd(uint32_t fd, uint32_t events, void* ctx)
     }
 }
 
-void Epoll::modifyFd(uint32_t fd, uint32_t events, void* ctx)
+void Epoll::modifyFd(int fd, uint32_t events, void* ctx)
 {
     epoll_event event;
     event.events = events;
@@ -100,7 +100,7 @@ void Epoll::modifyFd(uint32_t fd, uint32_t events, void* ctx)
     }
 }
 
-void Epoll::removeFd(uint32_t fd)
+void Epoll::removeFd(int fd)
 {
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {
