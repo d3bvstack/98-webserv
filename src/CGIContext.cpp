@@ -574,14 +574,7 @@ void CGIContext::buildResponse()
 {
     if (WIFEXITED(_childStatus) == 0 || WEXITSTATUS(_childStatus) != 0)
     {
-        if (!_outputBuffer.empty())
-        {
-            _response = buildResponseFromCgiOutput(_outputBuffer);
-            _response = server_utils::applyConnectionPolicy(_response, _client);
-            return;
-        }
-        _response = server_utils::applyConnectionPolicy(
-            Response::createErrorResponse(500, _vhost), _client);
+        _response = server_utils::applyConnectionPolicy(Response::createErrorResponse(500, _vhost), _client);
         return;
     }
 
