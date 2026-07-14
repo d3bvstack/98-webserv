@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/10 11:54:32 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/14 10:09:45 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class Server
 {
     private:
         std::vector<std::string>         _configurationFiles;
-        std::vector<Vhost>               _vhosts; // Maybe change to map<port, vector<Vhosts>>
+        std::vector<Vhost>               _vhosts;
         std::vector<ListeningSocket*>    _listeningSockets;
         std::vector<ClientConnection*>   _clientConnections;
 
