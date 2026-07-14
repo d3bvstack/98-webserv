@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 18:20:17 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/10 15:01:45 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/14 20:33:30 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ int main(int argc, char** argv)
     std::signal(SIGINT, stop);
     std::signal(SIGQUIT, stop);
     std::signal(SIGTERM, stop);
+    std::signal(SIGPIPE, SIG_IGN);
 
     Server* webserver = NULL;
 

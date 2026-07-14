@@ -405,7 +405,7 @@ void CGIContext::onCgiInputWritable(Epoll& epoll)
         ssize_t bytesWritten = send(_inputPipe[1],
                                     _requestBody.data() + _inputOffset,
                                     _requestBody.length() - _inputOffset,
-                                    MSG_DONTWAIT);
+                                    MSG_DONTWAIT | MSG_NOSIGNAL);
         if (bytesWritten > 0)
         {
             _inputOffset += static_cast<size_t>(bytesWritten);
