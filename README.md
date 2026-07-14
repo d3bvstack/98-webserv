@@ -230,9 +230,10 @@ make fclean     # Removes object files and the compiled binary
 
 ### CGI
 
+* [O'Reilly: CGI Programming on the World Wide Web](https://www.oreilly.com/openbook/cgi/)
+* [Philip Bohun: The Magic of cgi-bin](https://www.youtube.com/watch?v=NwRVJX0Ieno)
 * [RFC 3875: The Common Gateway Interface](https://datatracker.ietf.org/doc/html/rfc3875)
 * [Universidad de Oviedo: The Common Gateway Interface](https://www6.uniovi.es/~antonio/ncsa_httpd/cgi/overview.html)
-* [Philip Bohun: The Magic of cgi-bin](https://www.youtube.com/watch?v=NwRVJX0Ieno)
 
 
 ### AI usage
