@@ -359,16 +359,31 @@ bool CGIContext::start(Epoll& epoll)
             envp.push_back(const_cast<char*>(envStrings[i].c_str()));
         envp.push_back(NULL);
 
-        std::vector<std::string> argStrings;
-        argStrings.push_back(interpreter);
-        argStrings.push_back(scriptPath);
+        if (interpreter.empty())
+        {
+            std::vector<std::string> argStrings;
+            argStrings.push_back(scriptPath);
 
-        std::vector<char*> argv;
-        for (size_t i = 0; i < argStrings.size(); ++i)
-            argv.push_back(const_cast<char*>(argStrings[i].c_str()));
-        argv.push_back(NULL);
+            std::vector<char*> argv;
+            for (size_t i = 0; i < argStrings.size(); ++i)
+                argv.push_back(const_cast<char*>(argStrings[i].c_str()));
+            argv.push_back(NULL);
 
-        execve(interpreter.c_str(), &argv[0], &envp[0]);
+            execve(scriptPath.c_str(), &argv[0], &envp[0]);
+        }
+        else
+        {
+            std::vector<std::string> argStrings;
+            argStrings.push_back(interpreter);
+            argStrings.push_back(scriptPath);
+
+            std::vector<char*> argv;
+            for (size_t i = 0; i < argStrings.size(); ++i)
+                argv.push_back(const_cast<char*>(argStrings[i].c_str()));
+            argv.push_back(NULL);
+
+            execve(interpreter.c_str(), &argv[0], &envp[0]);
+        }
         _exit(1);
     }
 

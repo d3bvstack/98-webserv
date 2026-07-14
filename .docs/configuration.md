@@ -53,6 +53,8 @@ A virtual host is defined between the following tags:
 ### `cgi` (Optional)
 * Maps a file extension to an executable binary path.
    * Example: `cgi = .py /usr/bin/python3`
+   * For compiled/non-interpreted executables, omit the interpreter to execute the file directly:
+     * Example: `cgi = .cgi`
 
 ------------------------------
 

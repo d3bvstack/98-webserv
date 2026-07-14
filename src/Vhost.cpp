@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/12 19:31:22 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/02 10:53:35 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/15 00:08:44 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,12 +126,15 @@ void Vhost::addCGI(std::string cgi)
 {
     std::vector<std::string> tokens = splitBySpace(cgi);
 
-    if (tokens.size() != 2)
+    if (tokens.size() != 2 && tokens.size() != 1)
     {
-        throw std::runtime_error("Wrong format, expected 'error_pages = code path/to/file'");
+        throw std::runtime_error("Wrong format, expected 'cgi = .ext /path/to/interpreter' or 'cgi = .ext'");
     }
 
-    _cgi[tokens[0]] = tokens[1];
+    if (tokens.size() == 1)
+        _cgi[tokens[0]] = "";
+    else
+        _cgi[tokens[0]] = tokens[1];
 }
 
 void Vhost::addLocation(Location location)
