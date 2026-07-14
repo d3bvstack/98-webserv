@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/12 17:18:06 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/14 11:03:59 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -641,7 +641,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
     for (int i = 0; i < activeEventsCount; ++i)
     {
         EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
-        if (target == NULL || target->isDisconnected())
+        if (target == NULL)
             continue;
 
         uint32_t eventTypes = events[i].events;
@@ -650,6 +650,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
         {
             if (typeid(*target) == typeid(CGIContext))
             {
+                if (target->isDisconnected())
+                    continue;
                 CGIContext* cgi = static_cast<CGIContext*>(target);
                 
                 if (eventTypes & EPOLLERR)
@@ -659,6 +661,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
+                if (target->isDisconnected())
+                    continue;
                 ClientConnection* client = static_cast<ClientConnection*>(target);
                 std::cerr << "[ERROR] Socket error or hangup on fd " << client->getSocketFd() << std::endl;
                 disconnectClient(client->getSocketFd());
@@ -676,6 +680,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
         {
             if (typeid(*target) == typeid(CGIContext))
             {
+                if (target->isDisconnected())
+                    continue;
                 static_cast<CGIContext*>(target)->onCgiOutputReadable(_epoll);
             }
             else if (typeid(*target) == typeid(ListeningSocket))
@@ -684,6 +690,8 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
+                if (target->isDisconnected())
+                    continue;
                 ClientConnection* client = static_cast<ClientConnection*>(target);
                 handleClientIncomingEvent(client);
             }
@@ -737,11 +745,13 @@ void Server::handleOutgoingEvents(int activeEventsCount)
         EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        if (target == NULL || target->isDisconnected())
+        if (target == NULL)
             continue;
 
         if (eventTypes & EPOLLOUT)
         {
+            if (target->isDisconnected())
+                continue;
             if (typeid(*target) == typeid(CGIContext))
             {
                 static_cast<CGIContext*>(target)->onCgiInputWritable(_epoll);
