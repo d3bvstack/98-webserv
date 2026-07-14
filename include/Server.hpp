@@ -40,6 +40,7 @@ class Server
 
         Epoll                            _epoll;
         std::vector<CGIContext*>         _cgiContexts;
+        std::vector<EventTarget*>        _pendingDeletion;
 
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
         void acceptNewConnection(Socket* listenSocket);
@@ -69,6 +70,7 @@ class Server
         void processPendingRequests();
         void checkCgiChildren();
         void checkIdleTimeouts();
+        void cleanupPendingDeletions();
 
         void debugServer() const;
 };

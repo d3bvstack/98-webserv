@@ -108,6 +108,12 @@ Server::~Server()
         delete _clientConnections[i];
     }
     _clientConnections.clear();
+
+    for (size_t i = 0; i < _pendingDeletion.size(); ++i)
+    {
+        delete _pendingDeletion[i];
+    }
+    _pendingDeletion.clear();
 }
 
 /**
@@ -256,7 +262,8 @@ void Server::disconnectClient(int clientFd)
         {
             _epoll.removeFd((*cgiIt)->getOutputReadFd());
             _epoll.removeFd((*cgiIt)->getInputWriteFd());
-            delete *cgiIt;
+            (*cgiIt)->markDisconnected();
+            _pendingDeletion.push_back(*cgiIt);
             cgiIt = _cgiContexts.erase(cgiIt);
         }
         else
@@ -270,7 +277,8 @@ void Server::disconnectClient(int clientFd)
     {
         if ((*it)->getSocketFd() == clientFd)
         {
-            delete *it;
+            (*it)->markDisconnected();
+            _pendingDeletion.push_back(*it);
             _clientConnections.erase(it);
             break;
         }
@@ -633,7 +641,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
     for (int i = 0; i < activeEventsCount; ++i)
     {
         EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
-        if (target == NULL)
+        if (target == NULL || target->isDisconnected())
             continue;
 
         uint32_t eventTypes = events[i].events;
@@ -654,7 +662,6 @@ void Server::handleIncomingEvents(int activeEventsCount)
                 ClientConnection* client = static_cast<ClientConnection*>(target);
                 std::cerr << "[ERROR] Socket error or hangup on fd " << client->getSocketFd() << std::endl;
                 disconnectClient(client->getSocketFd());
-                events[i].data.ptr = NULL;
             }
             else if (typeid(*target) == typeid(ListeningSocket))
             {
@@ -678,8 +685,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
             else if (typeid(*target) == typeid(ClientConnection))
             {
                 ClientConnection* client = static_cast<ClientConnection*>(target);
-                if (handleClientIncomingEvent(client))
-                    events[i].data.ptr = NULL;
+                handleClientIncomingEvent(client);
             }
         }
     }
@@ -731,7 +737,7 @@ void Server::handleOutgoingEvents(int activeEventsCount)
         EventTarget* target = static_cast<EventTarget*>(events[i].data.ptr);
         uint32_t eventTypes = events[i].events;
 
-        if (target == NULL)
+        if (target == NULL || target->isDisconnected())
             continue;
 
         if (eventTypes & EPOLLOUT)
@@ -755,7 +761,7 @@ void Server::processPendingRequests()
     {
 		//If no client we just skip
         ClientConnection* client = *clientIt;
-        if (client == NULL || client->getVhost() == NULL)
+        if (client == NULL || client->isDisconnected() || client->getVhost() == NULL)
             continue;
 
         const std::vector<Request>& pendingRequests = client->getPendingRequests();
@@ -916,6 +922,16 @@ void Server::checkIdleTimeouts()
     }
     for (std::vector<int>::const_iterator it = idleFds.begin(); it != idleFds.end(); ++it)
         disconnectClient(*it);
+}
+
+void Server::cleanupPendingDeletions()
+{
+    for (std::vector<EventTarget*>::iterator it = _pendingDeletion.begin();
+         it != _pendingDeletion.end(); ++it)
+    {
+        delete *it;
+    }
+    _pendingDeletion.clear();
 }
 
 /**

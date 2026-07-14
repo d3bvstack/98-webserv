@@ -62,6 +62,7 @@ int main(int argc, char** argv)
             }
             webserver->checkCgiChildren();
             webserver->checkIdleTimeouts();
+            webserver->cleanupPendingDeletions();
         }
 
         delete webserver;
