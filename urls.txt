@@ -1,0 +1,63 @@
+# =============================================================================
+# Usage: siege -c 100 -t 30S -f urls.txt
+# =============================================================================
+
+# Port 9898 - example.com 
+# ---------------------------------------------------------------------------
+
+# Static files
+http://127.0.0.1:9898/
+
+# CGI - Python
+http://127.0.0.1:9898/cgi-bin/py/hello.py
+http://127.0.0.1:9898/cgi-bin/py/env.py
+http://127.0.0.1:9898/cgi-bin/py/form.py?name=test&value=42
+
+# CGI - PHP
+http://127.0.0.1:9898/cgi-bin/php/hello.php
+http://127.0.0.1:9898/cgi-bin/php/env.php
+
+# Redirect
+http://127.0.0.1:9898/old/page
+
+# POST requests
+http://127.0.0.1:9898/files POST "hello"
+http://127.0.0.1:9898/cgi-bin/py/hello.py POST "data"
+http://127.0.0.1:9898/cgi-bin/php/hello.php POST "data"
+http://127.0.0.1:9898/cgi-bin/py/form.py POST "field=value"
+
+# Autoindex directory
+http://127.0.0.1:9898/files/uploads/
+
+
+# Port 8989 - example2.com (secondary vhost)
+# ---------------------------------------------------------------------------
+
+# Static files
+http://127.0.0.1:8989/
+
+# CGI - Python
+http://127.0.0.1:8989/py/hello.py
+http://127.0.0.1:8989/py/env.py
+
+
+# Port 8080 - localhost (tester vhost)
+# ---------------------------------------------------------------------------
+
+# Static files
+#http://127.0.0.1:8080/
+#http://127.0.0.1:8080/index.html
+#http://127.0.0.1:8080/nonexistent
+
+# Nested files and directories
+#http://127.0.0.1:8080/directory/youpi.bad_extension
+#http://127.0.0.1:8080/directory/Yeah/not_happy.bad_extension
+#http://127.0.0.1:8080/directory/nop/other.pouic
+#http://127.0.0.1:8080/directory/
+
+# POST requests
+#http://127.0.0.1:8080/post_body POST "hello"
+#http://127.0.0.1:8080/directory POST "test"
+
+# POST exceeding max body size (413)
+#http://127.0.0.1:8080/post_body POST "This body is intentionally way too long and exceeds the configured maximum body size limit of one hundred bytes for this endpoint which should trigger a 413 Payload Too Large error response from the server"
