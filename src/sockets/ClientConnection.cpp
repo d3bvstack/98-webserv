@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:40 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:01:26 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/15 10:20:36 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,12 @@
 #include "Response.hpp"
 
 ClientConnection::ClientConnection(int fd, uint16_t port)
-    : Socket(), _port(port), _vhost(NULL), _writePendingOffset(0), _lastActivity(time(NULL)), _keepAlive(false)
+    : Socket(),
+    _port(port),
+    _vhost(NULL),
+    _writePendingOffset(0),
+    _lastActivity(time(NULL)),
+    _keepAlive(false)
 {
     _socketFd = fd;
     _socketType = SOCKET_TYPE_CLIENT;

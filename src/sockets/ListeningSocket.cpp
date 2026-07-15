@@ -22,7 +22,9 @@
 #include <stdexcept>
 
 ListeningSocket::ListeningSocket(std::string host, uint16_t port)
-	: _port(port), _hostStr(host), _hostNum(0)
+	: _port(port),
+	_hostStr(host),
+	_hostNum(0)
 {
 	_socketType = SOCKET_TYPE_LISTEN;
 
