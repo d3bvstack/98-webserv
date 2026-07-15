@@ -112,6 +112,17 @@ void ClientConnection::setWritePendingBuffer(const Response& response)
     _writePendingOffset = 0;
 }
 
+void ClientConnection::sendHeaders(const Response& response)
+{
+    _writePendingBuffer = response.toStringHeadersOnly();
+    _writePendingOffset = 0;
+}
+
+void ClientConnection::appendToWriteBuffer(const std::string& data)
+{
+    _writePendingBuffer.append(data);
+}
+
 void ClientConnection::removeFromReadBuffer(size_t n)
 {
     if (n >= _readBuffer.length())

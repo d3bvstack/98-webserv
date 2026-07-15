@@ -219,6 +219,7 @@ CGIContext::CGIContext(const Vhost& vhost, const Location& location,
     _outputClosed(false),
     _childExited(false),
     _childStatus(0),
+    _headersParsed(false),
     _vhost(vhost),
     _location(location),
     _request(request),
@@ -449,8 +450,67 @@ void CGIContext::onCgiOutputReadable(Epoll& epoll)
         ssize_t bytesRead = recv(_outputPipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
         if (bytesRead > 0)
         {
-            std::cerr << "Bytes read: " << bytesRead << std::endl;
-            _outputBuffer.append(buffer, static_cast<size_t>(bytesRead));
+            if (!_headersParsed)
+            {
+                _outputBuffer.append(buffer, static_cast<size_t>(bytesRead));
+
+                size_t boundary = _outputBuffer.find("\r\n\r\n");
+                bool hasCRLF = (boundary != std::string::npos);
+                if (!hasCRLF)
+                    boundary = _outputBuffer.find("\n\n");
+
+                if (boundary != std::string::npos)
+                {
+                    size_t bodyStart = hasCRLF ? boundary + 4 : boundary + 2;
+                    std::string headerBlock = _outputBuffer.substr(0, boundary);
+                    std::string firstBody = _outputBuffer.substr(bodyStart);
+
+                    std::string normalized = normalizeLineEndings(headerBlock);
+                    int statusCode = 200;
+                    std::vector<std::pair<std::string, std::string> > headers;
+                    {
+                        std::stringstream headerStream(normalized);
+                        std::string line;
+                        while (std::getline(headerStream, line))
+                        {
+                            line = trimCopy(line);
+                            if (line.empty())
+                                continue;
+                            size_t colonPos = line.find(':');
+                            if (colonPos == std::string::npos)
+                                continue;
+                            std::string key = trimCopy(line.substr(0, colonPos));
+                            std::string value = trimCopy(line.substr(colonPos + 1));
+                            if (key == "Status")
+                            {
+                                std::pair<int, std::string> st = parseCgiStatus(value);
+                                statusCode = st.first;
+                            }
+                            else if (key != "Content-Length")
+                            {
+                                headers.push_back(std::make_pair(key, value));
+                            }
+                        }
+                    }
+
+                    _response = Response(statusCode);
+                    for (size_t i = 0; i < headers.size(); ++i)
+                        _response.setHeader(headers[i].first, headers[i].second);
+                    _response = server_utils::applyConnectionPolicy(_response, _client);
+                    _response.setChunked();
+
+                    _client->sendHeaders(_response);
+                    if (!firstBody.empty())
+                        _client->appendToWriteBuffer(Response::encodeChunk(firstBody.data(), firstBody.length()));
+
+                    _headersParsed = true;
+                    _outputBuffer.clear();
+                }
+            }
+            else
+            {
+                _client->appendToWriteBuffer(Response::encodeChunk(buffer, static_cast<size_t>(bytesRead)));
+            }
             continue;
         }
         if (bytesRead == 0)
@@ -498,8 +558,16 @@ void CGIContext::checkChild(Epoll& epoll)
         _childExited = true;
         cleanup(epoll);
         _state = COMPLETE;
-        _response = server_utils::applyConnectionPolicy(
-            Response::createErrorResponse(504, _vhost), _client);
+        if (_headersParsed)
+        {
+            _client->setKeepAlive(false);
+            sendFinalChunk();
+        }
+        else
+        {
+            _response = server_utils::applyConnectionPolicy(
+                Response::createErrorResponse(504, _vhost), _client);
+        }
         return;
     }
 
@@ -580,6 +648,8 @@ void CGIContext::cleanup(Epoll& epoll)
 
 void CGIContext::deliverResponse()
 {
+    if (_headersParsed)
+        return;
     if (_response.toString().empty())
         buildResponse();
     _client->addPendingResponse(_response);
@@ -587,6 +657,14 @@ void CGIContext::deliverResponse()
 
 void CGIContext::buildResponse()
 {
+    if (_headersParsed)
+    {
+        if (WIFEXITED(_childStatus) == 0 || WEXITSTATUS(_childStatus) != 0)
+            _client->setKeepAlive(false);
+        sendFinalChunk();
+        return;
+    }
+
     if (WIFEXITED(_childStatus) == 0 || WEXITSTATUS(_childStatus) != 0)
     {
         _response = server_utils::applyConnectionPolicy(Response::createErrorResponse(500, _vhost), _client);
@@ -595,4 +673,9 @@ void CGIContext::buildResponse()
 
     _response = buildResponseFromCgiOutput(_outputBuffer);
     _response = server_utils::applyConnectionPolicy(_response, _client);
+}
+
+void CGIContext::sendFinalChunk()
+{
+    _client->appendToWriteBuffer(Response::finalChunk());
 }

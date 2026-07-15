@@ -321,7 +321,7 @@ namespace server_utils
         return (false);
     }
 
-    Response buildGetResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
+    Response buildGetResponse(const Vhost& vhost, const Location& location, const Request& request, ClientConnection* client)
     {
         // Redirects are handled before touching the filesystem.
         if (location.isReturnSet())
@@ -373,7 +373,32 @@ namespace server_utils
             }
         }
 
-        // Serve the file content with a best-effort content type.
+        // Stream large files with chunked transfer encoding.
+        const size_t LARGE_FILE_THRESHOLD = 1048576;
+        if (client != NULL && client->getWriteBuffer() == NULL)
+        {
+            struct stat fileSt;
+            if (stat(filesystemPath.c_str(), &fileSt) == 0
+                && static_cast<size_t>(fileSt.st_size) > LARGE_FILE_THRESHOLD)
+            {
+                Response response(200);
+                response.setHeader("Content-Type", getContentType(filesystemPath));
+                response.setChunked();
+                response = applyConnectionPolicy(response, client);
+                client->sendHeaders(response);
+
+                std::ifstream file(filesystemPath.c_str(), std::ios::in | std::ios::binary);
+                char buf[65536];
+                while (file.read(buf, sizeof(buf)) || file.gcount() > 0)
+                    client->appendToWriteBuffer(Response::encodeChunk(buf, file.gcount()));
+                client->appendToWriteBuffer(Response::finalChunk());
+
+                Response streamed(200);
+                streamed.setStreamed();
+                return (streamed);
+            }
+        }
+
         std::string body = readFileToString(filesystemPath);
         if (body.empty() && !pathExists(filesystemPath, NULL))
             return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));

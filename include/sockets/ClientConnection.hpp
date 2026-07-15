@@ -55,6 +55,9 @@ class ClientConnection : public Socket
         void setVhost(Vhost* vhost);
         void setWritePendingBuffer(const Response& response);
 
+        void sendHeaders(const Response& response);
+        void appendToWriteBuffer(const std::string& data);
+
         void setKeepAlive(bool keepAlive);
         bool getKeepAlive() const;
 

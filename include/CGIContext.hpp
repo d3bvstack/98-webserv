@@ -54,6 +54,7 @@ class CGIContext : public EventTarget
         bool _outputClosed;
         bool _childExited;
         int _childStatus;
+        bool _headersParsed;
 
         const Vhost& _vhost;
         const Location& _location;
@@ -67,6 +68,7 @@ class CGIContext : public EventTarget
         void closePipeEnd(Epoll& epoll, int fd);
         void cleanup(Epoll& epoll);
         void buildResponse();
+        void sendFinalChunk();
 
         CGIContext(const CGIContext&);
         CGIContext& operator=(const CGIContext&);

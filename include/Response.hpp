@@ -28,6 +28,7 @@ class Response
         std::string _version;
         std::map<std::string, std::string> _headers;
         std::string _body;
+        bool _streamed;
 
         std::string codeToReason(int code) const;
         std::string numToString(size_t num) const;
@@ -46,12 +47,19 @@ class Response
         void setAllowedMethods(const std::vector<std::string>& allowedMethods);
         void setConnectionClose();
         void setConnectionKeepAlive(uint64_t timeout);
+        void setChunked();
+        void setStreamed();
 
         int getStatusCode() const { return (_statusCode); };
         const std::string& getReason() const { return (_reason); };
         const std::string& getVersion() const { return (_version); };
+        bool isStreamed() const { return (_streamed); };
 
         std::string toString() const;
+        std::string toStringHeadersOnly() const;
+
+        static std::string encodeChunk(const char* data, size_t len);
+        static std::string finalChunk();
 
         void debugResponse() const;
 };

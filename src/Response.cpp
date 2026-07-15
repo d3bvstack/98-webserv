@@ -20,7 +20,7 @@
 #include "Vhost.hpp"
 
 Response::Response(int code)
-    : _statusCode(code), _version("HTTP/1.1"), _body("")
+    : _statusCode(code), _version("HTTP/1.1"), _body(""), _streamed(false)
 {
     _reason = codeToReason(code);
     _headers["Content-Length"] = "0";
@@ -107,6 +107,18 @@ void Response::setConnectionKeepAlive(uint64_t timeout)
     _headers["Keep-Alive"] = sstream.str();
 }
 
+void Response::setChunked()
+{
+    _headers["Transfer-Encoding"] = "chunked";
+    _headers.erase("Content-Length");
+    _body.clear();
+}
+
+void Response::setStreamed()
+{
+    _streamed = true;
+}
+
 std::string Response::codeToReason(int code) const
 {
     switch (code)
@@ -168,6 +180,35 @@ std::string Response::toString() const
     sstream << _body;
 
     return (sstream.str());
+}
+
+std::string Response::toStringHeadersOnly() const
+{
+    std::stringstream sstream;
+
+    sstream << _version << " " << _statusCode << " " << _reason << "\r\n";
+    for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
+        it != _headers.end(); ++it)
+    {
+        sstream << it->first << ": " << it->second << "\r\n";
+    }
+    sstream << "\r\n";
+
+    return (sstream.str());
+}
+
+std::string Response::encodeChunk(const char* data, size_t len)
+{
+    std::stringstream sstream;
+    sstream << std::hex << len << "\r\n";
+    sstream.write(data, len);
+    sstream << "\r\n";
+    return (sstream.str());
+}
+
+std::string Response::finalChunk()
+{
+    return ("0\r\n\r\n");
 }
 
 void Response::debugResponse() const

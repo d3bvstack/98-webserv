@@ -853,7 +853,8 @@ void Server::processPendingRequests()
 
             if (builtResponse)
             {
-                client->addPendingResponse(response);
+                if (!response.isStreamed())
+                    client->addPendingResponse(response);
                 client->removePendingRequest(request);
             }
         }
