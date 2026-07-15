@@ -38,7 +38,6 @@ class ListeningSocket : public Socket
         uint16_t getPort() const;
 
         void create();
-        void setReusePort();
         void bind();
         void listen();
 };

@@ -62,21 +62,6 @@ void ListeningSocket::create()
 	}
 }
 
-void ListeningSocket::setReusePort()
-{
-	if (_socketFd == -1)
-	{
-		throw std::runtime_error("Socket not created, when trying to set SO_REUSEPORT.");
-	}
-
-	int optval = 1;
-	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
-	{
-		throw std::runtime_error("Failed to set SO_REUSEPORT");
-	}
-	std::cerr << "[INFO] Socket fd " << _socketFd << " SO_REUSEPORT option set" << std::endl;
-}
-
 void ListeningSocket::bind()
 {
 	if (_socketFd == -1)

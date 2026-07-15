@@ -178,7 +178,6 @@ void Server::bindListeningSockets()
         {
             tempSocket = new ListeningSocket(host, port);
             tempSocket->create();
-            tempSocket->setReusePort();
             tempSocket->bind();
             _listeningSockets.push_back(tempSocket);
             std::cerr << "[INFO] Server socket on port " << port << " created successfully" << std::endl;
