@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/14 11:03:59 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/16 15:37:17 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,7 +94,7 @@ Server::~Server()
     for (size_t i = 0; i < _cgiContexts.size(); ++i)
     {
         delete _cgiContexts[i];
-    } 
+    }
     _cgiContexts.clear();
 
     for (size_t i = 0; i < _listeningSockets.size(); ++i)
@@ -259,8 +259,10 @@ void Server::disconnectClient(int clientFd)
     {
         if ((*cgiIt)->getClient() != NULL && (*cgiIt)->getClient()->getSocketFd() == clientFd)
         {
-            _epoll.removeFd((*cgiIt)->getOutputReadFd());
-            _epoll.removeFd((*cgiIt)->getInputWriteFd());
+            if ((*cgiIt)->getOutputReadFd() != -1)
+                _epoll.removeFd((*cgiIt)->getOutputReadFd());
+            if ((*cgiIt)->getInputWriteFd() != -1)
+                _epoll.removeFd((*cgiIt)->getInputWriteFd());
             (*cgiIt)->markDisconnected();
             _pendingDeletion.push_back(*cgiIt);
             cgiIt = _cgiContexts.erase(cgiIt);
@@ -652,7 +654,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
                 if (target->isDisconnected())
                     continue;
                 CGIContext* cgi = static_cast<CGIContext*>(target);
-                
+
                 if (eventTypes & EPOLLERR)
                     cgi->handleError(_epoll);
                 else

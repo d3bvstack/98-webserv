@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/13 22:03:43 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/16 15:37:04 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,8 @@ void Epoll::modifyFd(int fd, uint32_t events, void* ctx)
 
 void Epoll::removeFd(int fd)
 {
+    if (fd == -1)
+        return;
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {
         std::cerr << "[ERROR] Failed to remove fd " << fd
