@@ -97,12 +97,6 @@ Server::~Server()
     }
     _cgiContexts.clear();
 
-    for (size_t i = 0; i < _listeningSockets.size(); ++i)
-    {
-        delete _listeningSockets[i];
-    }
-    _listeningSockets.clear();
-
     for (size_t i = 0; i < _clientConnections.size(); ++i)
     {
         delete _clientConnections[i];
@@ -114,6 +108,12 @@ Server::~Server()
         delete _pendingDeletion[i];
     }
     _pendingDeletion.clear();
+
+    for (size_t i = 0; i < _listeningSockets.size(); ++i)
+    {
+        delete _listeningSockets[i];
+    }
+    _listeningSockets.clear();
 }
 
 /**

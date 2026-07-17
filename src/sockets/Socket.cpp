@@ -12,6 +12,7 @@
 
 #include "Socket.hpp"
 #include <unistd.h>
+#include <sys/socket.h>
 
 Socket::Socket()
     : _socketFd(-1), _socketType(-1)
@@ -22,6 +23,7 @@ Socket::~Socket()
 {
     if (_socketFd != -1) 
     {
+        shutdown(_socketFd, SHUT_RDWR);
         close(_socketFd);
         _socketFd = -1; 
     }
