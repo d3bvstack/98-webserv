@@ -60,6 +60,8 @@ void ListeningSocket::create()
 	{
 		throw std::runtime_error("Failed to create socket");
 	}
+	int opt = 1;
+	setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 }
 
 void ListeningSocket::bind()
