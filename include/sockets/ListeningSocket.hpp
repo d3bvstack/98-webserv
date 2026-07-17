@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:06:00 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/26 00:11:13 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:41:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,7 @@
 #include <netinet/in.h>
 #include "Socket.hpp"
 
-#ifndef LISTEN_BACKLOG
-# define LISTEN_BACKLOG 265
-#endif
+const int LISTEN_BACKLOG = 265;
 
 class ListeningSocket : public Socket
 {

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/17 14:22:25 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:44:31 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,9 @@
  */
 Server::Server()
 {
-    DIR* dirStream = opendir(DEFAULT_CONFIG_DIR);
+    DIR* dirStream = opendir(DEFAULT_CONFIG_DIR.c_str());
     if (dirStream == NULL)
-        throw std::runtime_error("[ERROR] Could not open default config directory " DEFAULT_CONFIG_DIR ".");
+        throw std::runtime_error("[ERROR] Could not open default config directory " + DEFAULT_CONFIG_DIR + ".");
 
     struct dirent* dirEntry;
     while ((dirEntry = readdir(dirStream)) != NULL)

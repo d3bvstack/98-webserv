@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/17 14:30:39 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:43:20 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,7 @@ class ListeningSocket;
 class Socket;
 
 
-#ifndef DEFAULT_CONFIG_DIR
-# define DEFAULT_CONFIG_DIR "./.conf"
-#endif
+const std::string DEFAULT_CONFIG_DIR = "./.conf";
 
 class Server
 {
