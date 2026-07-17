@@ -94,15 +94,15 @@ void ListeningSocket::listen()
 
 uint16_t ListeningSocket::getPort() const
 {
-	return (_port);
+	return _port;
 }
 
 uint32_t ListeningSocket::getHostNum() const
 {
-	return (_hostNum);
+	return _hostNum;
 }
 
 std::string ListeningSocket::getHostPresentation() const
 {
-	return (_hostStr);
+	return _hostStr;
 }

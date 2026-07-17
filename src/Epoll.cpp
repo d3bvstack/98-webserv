@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:13:15 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/16 15:37:04 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:10:47 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,5 +123,5 @@ int Epoll::waitWrapper()
         throw std::runtime_error(" epoll_wait failed");
     }
     // std::cerr << "[INFO] epoll.wait() has " << numEvents << " fds with events" << std::endl;
-    return (numEvents);
+    return numEvents;
 }

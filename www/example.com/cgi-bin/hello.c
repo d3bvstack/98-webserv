@@ -12,5 +12,5 @@ int main(void)
     printf("\r\n");
     printf("Hello from compiled C CGI!\n");
     printf("Request Method: %s\n", method);
-    return (0);
+    return 0;
 }

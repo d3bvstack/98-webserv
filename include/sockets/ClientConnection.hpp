@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:43 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:01:24 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:30:59 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,11 +40,11 @@ class ClientConnection : public Socket
         ClientConnection(int fd, uint16_t port);
         ~ClientConnection();
 
-        uint16_t getPort() const { return (_port); };
-        const Vhost* getVhost() const { return (_vhost); };
-        const std::string& getReadBuffer() const { return (_readBuffer); };
-        const std::vector<Request>& getPendingRequests() const { return (_pendingRequests); };
-        const std::vector<Response>& getPendingResponses() const { return (_pendingResponses); };
+        uint16_t getPort() const { return _port; };
+        const Vhost* getVhost() const { return _vhost; };
+        const std::string& getReadBuffer() const { return _readBuffer; };
+        const std::vector<Request>& getPendingRequests() const { return _pendingRequests; };
+        const std::vector<Response>& getPendingResponses() const { return _pendingResponses; };
         const char* getWriteBuffer() const;
 
         void addPendingRequest(Request request);

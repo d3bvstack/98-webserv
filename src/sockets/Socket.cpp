@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:30:00 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/22 23:55:47 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:23:10 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,20 +21,20 @@ Socket::Socket()
 
 Socket::~Socket()
 {
-    if (_socketFd != -1) 
+    if (_socketFd != -1)
     {
         shutdown(_socketFd, SHUT_RDWR);
         close(_socketFd);
-        _socketFd = -1; 
+        _socketFd = -1;
     }
 }
 
 int Socket::getSocketFd() const
 {
-    return (_socketFd);
+    return _socketFd;
 }
 
 int Socket::getSocketType() const
 {
-    return (_socketType);
+    return _socketType;
 }

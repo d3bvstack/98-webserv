@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/17 12:18:34 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/17 12:19:20 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:29:24 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,9 @@ namespace
     std::string joinPaths(const std::string& left, const std::string& right)
     {
         if (left.empty())
-            return (right);
+            return right;
         if (right.empty())
-            return (left);
+            return left;
         if (left[left.length() - 1] == '/' && right[0] == '/')
             return (left + right.substr(1));
         if (left[left.length() - 1] != '/' && right[0] != '/')
@@ -51,13 +51,13 @@ namespace
         {
             size_t extensionPos = requestPath.find(extension, searchPos);
             if (extensionPos == std::string::npos)
-                return (false);
+                return false;
 
             size_t extensionEndPos = extensionPos + extension.length();
             if (extensionEndPos == requestPath.length() || requestPath[extensionEndPos] == '/')
             {
                 *scriptEndPos = extensionEndPos;
-                return (true);
+                return true;
             }
 
             searchPos = extensionPos + 1;
@@ -86,11 +86,11 @@ namespace
         }
 
         if (!found)
-            return (false);
+            return false;
 
         scriptUrlPath = requestPath.substr(0, bestScriptEndPos);
         pathInfo = requestPath.substr(bestScriptEndPos);
-        return (true);
+        return true;
     }
 
     std::string resolveFilesystemPathFromUrlPath(const Location& location, const std::string& requestPath)
@@ -110,7 +110,7 @@ namespace
         std::string resolved = joinPaths(location.getRoot(), urlPath);
         if (resolved.length() > 1 && resolved[resolved.length() - 1] == '/')
             resolved.erase(resolved.length() - 1);
-        return (resolved);
+        return resolved;
     }
 
     std::string normalizeLineEndings(const std::string& input)
@@ -130,16 +130,16 @@ namespace
                 normalized += input[i];
             }
         }
-        return (normalized);
+        return normalized;
     }
 
     std::string trimCopy(const std::string& value)
     {
         size_t first = value.find_first_not_of(" \t\r\n");
         if (first == std::string::npos)
-            return ("");
+            return "";
         size_t last = value.find_last_not_of(" \t\r\n");
-        return (value.substr(first, last - first + 1));
+        return value.substr(first, last - first + 1);
     }
 
     std::pair<int, std::string> parseCgiStatus(const std::string& statusValue)
@@ -150,7 +150,7 @@ namespace
         sstream >> code;
         std::getline(sstream, reason);
         reason = trimCopy(reason);
-        return (std::make_pair(code, reason));
+        return std::make_pair(code, reason);
     }
 
     Response buildResponseFromCgiOutput(const std::string& rawOutput)
@@ -196,15 +196,15 @@ namespace
              it != headers.end(); ++it)
             response.setHeader(it->first, it->second);
         response.setBody(body);
-        return (response);
+        return response;
     }
 
     std::string getRequestExtension(const std::string& path)
     {
         size_t dotPos = path.find_last_of('.');
         if (dotPos == std::string::npos)
-            return ("");
-        return (path.substr(dotPos));
+            return "";
+        return path.substr(dotPos);
     }
 
     std::string findCgiInterpreter(const Vhost& vhost, const Request& request)
@@ -212,14 +212,14 @@ namespace
         std::string scriptUrlPath;
         std::string pathInfo;
         if (!splitCgiPath(vhost, request, scriptUrlPath, pathInfo))
-            return ("");
+            return "";
 
         std::string requestExtension = getRequestExtension(scriptUrlPath);
         const std::map<std::string, std::string>& cgi = vhost.getCGI();
         std::map<std::string, std::string>::const_iterator it = cgi.find(requestExtension);
         if (it == cgi.end())
-            return ("");
-        return (it->second);
+            return "";
+        return it->second;
     }
 }
 
@@ -260,7 +260,7 @@ bool CGIContext::start(Epoll& epoll)
     {
         _state = ERROR_STATE;
         _errorStatusCode = 500;
-        return (false);
+        return false;
     }
 
     std::string interpreter = findCgiInterpreter(_vhost, _request);
@@ -271,7 +271,7 @@ bool CGIContext::start(Epoll& epoll)
     {
         _state = ERROR_STATE;
         _errorStatusCode = 500;
-        return (false);
+        return false;
     }
 
     std::string scriptPath = resolveFilesystemPathFromUrlPath(_location, scriptUrlPath);
@@ -282,7 +282,7 @@ bool CGIContext::start(Epoll& epoll)
         {
             _state = ERROR_STATE;
             _errorStatusCode = 404;
-            return (false);
+            return false;
         }
     }
 
@@ -291,7 +291,7 @@ bool CGIContext::start(Epoll& epoll)
     {
         _state = ERROR_STATE;
         _errorStatusCode = 500;
-        return (false);
+        return false;
     }
 
     _pid = fork();
@@ -303,7 +303,7 @@ bool CGIContext::start(Epoll& epoll)
         close(_outputPipe[1]);
         _state = ERROR_STATE;
         _errorStatusCode = 500;
-        return (false);
+        return false;
     }
 
     if (_pid == 0)
@@ -414,7 +414,7 @@ bool CGIContext::start(Epoll& epoll)
     }
 
     epoll.addFd(_outputPipe[0], EPOLLIN | EPOLLERR | EPOLLHUP, this);
-    return (true);
+    return true;
 }
 
 void CGIContext::onCgiInputWritable(Epoll& epoll)
@@ -599,32 +599,32 @@ bool CGIContext::isComplete() const
 
 ClientConnection* CGIContext::getClient() const
 {
-    return (_client);
+    return _client;
 }
 
 int CGIContext::getOutputReadFd() const
 {
-    return (_outputPipe[0]);
+    return _outputPipe[0];
 }
 
 int CGIContext::getInputWriteFd() const
 {
-    return (_inputPipe[1]);
+    return _inputPipe[1];
 }
 
 pid_t CGIContext::getPid() const
 {
-    return (_pid);
+    return _pid;
 }
 
 CGIContext::State CGIContext::getState() const
 {
-    return (_state);
+    return _state;
 }
 
 int CGIContext::getErrorStatusCode() const
 {
-    return (_errorStatusCode);
+    return _errorStatusCode;
 }
 
 void CGIContext::closePipeEnd(Epoll& epoll, int fd)

@@ -9,6 +9,6 @@ class EventTarget
         EventTarget() : _disconnected(false) {}
         virtual ~EventTarget() {}
 
-        bool isDisconnected() const { return (_disconnected); }
+        bool isDisconnected() const { return _disconnected; }
         void markDisconnected()      { _disconnected = true; }
 };

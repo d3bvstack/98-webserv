@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/14 12:31:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 20:33:48 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:29:35 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,10 +27,10 @@ std::string ConfigParser::trimAndStripComments(const std::string& str)
 {
     size_t start = str.find_first_not_of(" \t\r\n");
     if (start == std::string::npos)
-        return ("");
+        return "";
 
     if (str[start] == ';')
-        return ("");
+        return "";
 
     const std::string *source = &str;
     std::string temp;
@@ -43,10 +43,10 @@ std::string ConfigParser::trimAndStripComments(const std::string& str)
 
     start = source->find_first_not_of(" \t\r\n");
     if (start == std::string::npos)
-        return ("");
+        return "";
 
     size_t end = source->find_last_not_of(" \t\r\n");
-    return (source->substr(start, end - start + 1));
+    return source->substr(start, end - start + 1);
 }
 
 template <typename T>
@@ -55,7 +55,7 @@ T ConfigParser::stringToNum(const std::string& str)
     std::stringstream stream(str);
     T number;
     stream >> number;
-    return (number);
+    return number;
 }
 
 void ConfigParser::parseKeyValue(const std::string& line, std::string& key, std::string& value)

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:08:40 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/15 10:20:36 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:22:46 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void ClientConnection::setKeepAlive(bool keepAlive)
 
 bool ClientConnection::getKeepAlive() const
 {
-    return (_keepAlive);
+    return _keepAlive;
 }
 
 void ClientConnection::appendReadBuffer(const char* buffer, size_t size)
@@ -80,7 +80,7 @@ void ClientConnection::removePendingResponse(const Response& response)
 const char* ClientConnection::getWriteBuffer() const
 {
     if (_writePendingBuffer.empty() || _writePendingOffset >= _writePendingBuffer.size())
-        return (NULL);
+        return NULL;
     return (_writePendingBuffer.data() + _writePendingOffset);
 }
 
@@ -147,5 +147,5 @@ bool ClientConnection::isIdle(time_t timeoutSec) const
 
 time_t ClientConnection::getLastActivity() const
 {
-    return (_lastActivity);
+    return _lastActivity;
 }

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 09:52:45 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/30 23:01:25 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:30:24 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,10 +50,10 @@ class Response
         void setChunked();
         void setStreamed();
 
-        int getStatusCode() const { return (_statusCode); };
-        const std::string& getReason() const { return (_reason); };
-        const std::string& getVersion() const { return (_version); };
-        bool isStreamed() const { return (_streamed); };
+        int getStatusCode() const { return _statusCode; };
+        const std::string& getReason() const { return _reason; };
+        const std::string& getVersion() const { return _version; };
+        bool isStreamed() const { return _streamed; };
 
         std::string toString() const;
         std::string toStringHeadersOnly() const;

@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/16 15:37:17 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:22:25 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,9 +152,9 @@ bool Server::isPortAlreadyBound(const std::string& host, uint16_t port) const
     for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin(); it != _listeningSockets.end(); ++it)
     {
         if ((*it)->getPort() == port && (*it)->getHostPresentation() == host)
-            return (true);
+            return true;
     }
-    return (false);
+    return false;
 }
 
 /**
@@ -240,7 +240,7 @@ void Server::startListening()
  */
 int Server::pollEvents()
 {
-    return (_epoll.waitWrapper());
+    return _epoll.waitWrapper();
 }
 
 /**
@@ -388,7 +388,7 @@ static std::string decodeChunkedBody(const std::string& body)
         pos += chunkSize + 2; // Skip trailing \r\n
     }
 
-    return (decoded);
+    return decoded;
 }
 
 
@@ -403,7 +403,7 @@ static bool isValidMethod(const std::string& requestStr)
 {
     size_t spacePos = requestStr.find(' ');
     if (spacePos == std::string::npos)
-        return (false);
+        return false;
 
     std::string method = requestStr.substr(0, spacePos);
     return (method == "GET" ||
@@ -428,12 +428,12 @@ static uint64_t resolveBodyLimit(const ClientConnection* client, const std::stri
         Request request(headers + "\r\n\r\n");
         const Location* location = server_utils::findBestLocation(vhost, request.getPath());
         if (location != NULL)
-            return (location->getMaxBodySize());
+            return location->getMaxBodySize();
     }
     catch (const std::exception&)
     {
     }
-    return (vhost.getMaxBodySize());
+    return vhost.getMaxBodySize();
 }
 
 /**

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: atabarea <atabarea@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/22 13:45:36 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/08 12:36:12 by atabarea         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:29:12 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Response::Response(int code)
     _reason = codeToReason(code);
     _headers["Content-Length"] = "0";
     _headers["Server"] = "98Webserv";
-    
+
 }
 
 Response::~Response()
@@ -46,11 +46,11 @@ static std::string readFileToString(const std::string& filePath)
     std::ifstream file(filePath.c_str());
     if (!file.is_open())
     {
-        return ("");
+        return "";
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
-    return (buffer.str());
+    return buffer.str();
 }
 
 Response Response::createErrorResponse(int code, const Vhost& vhost)
@@ -65,12 +65,12 @@ Response Response::createErrorResponse(int code, const Vhost& vhost)
         {
             response.setBody(content);
             response.setHeader("Content-Type", "text/html");
-            return (response);
+            return response;
         }
     }
     response.setBody(response.codeToReason(code));
     response.setHeader("Content-Type", "text/plain");
-    return (response);
+    return response;
 }
 
 void Response::setHeader(const std::string& key, const std::string& value)
@@ -149,7 +149,7 @@ std::string Response::numToString(size_t num) const
 {
     std::stringstream sstream;
     sstream << num;
-    return (sstream.str());
+    return sstream.str();
 }
 
 std::string Response::methodsToString(const std::vector<std::string>& allowedMethods) const
@@ -163,7 +163,7 @@ std::string Response::methodsToString(const std::vector<std::string>& allowedMet
             result += ", ";
         }
     }
-    return (result);
+    return result;
 }
 
 std::string Response::toString() const
@@ -179,7 +179,7 @@ std::string Response::toString() const
     sstream << "\r\n";
     sstream << _body;
 
-    return (sstream.str());
+    return sstream.str();
 }
 
 std::string Response::toStringHeadersOnly() const
@@ -194,7 +194,7 @@ std::string Response::toStringHeadersOnly() const
     }
     sstream << "\r\n";
 
-    return (sstream.str());
+    return sstream.str();
 }
 
 std::string Response::encodeChunk(const char* data, size_t len)
@@ -203,12 +203,12 @@ std::string Response::encodeChunk(const char* data, size_t len)
     sstream << std::hex << len << "\r\n";
     sstream.write(data, len);
     sstream << "\r\n";
-    return (sstream.str());
+    return sstream.str();
 }
 
 std::string Response::finalChunk()
 {
-    return ("0\r\n\r\n");
+    return "0\r\n\r\n";
 }
 
 void Response::debugResponse() const

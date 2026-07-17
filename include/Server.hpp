@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/11 22:00:54 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/14 10:09:45 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:30:39 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,8 @@ class Server
         Server(int argc, char **argv);
         ~Server();
 
-        const std::vector<std::string>& getConfigurationFiles() const   { return (_configurationFiles); };
-        const std::vector<Vhost>& getVhosts() const         { return (_vhosts); };
+        const std::vector<std::string>& getConfigurationFiles() const   { return _configurationFiles; };
+        const std::vector<Vhost>& getVhosts() const         { return _vhosts; };
 
         void setVhosts(const std::vector<Vhost>& vhosts)    { _vhosts = vhosts; }
         void addVhosts(const Vhost& vhost)                  { _vhosts.push_back(vhost); }

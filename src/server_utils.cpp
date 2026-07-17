@@ -21,7 +21,7 @@ namespace
     bool hasSuffix(const std::string& value, const std::string& suffix)
     {
         if (value.length() < suffix.length())
-            return (false);
+            return false;
         return (value.compare(value.length() - suffix.length(), suffix.length(), suffix) == 0);
     }
 
@@ -30,18 +30,18 @@ namespace
         struct stat stats;
 
         if (stat(path.c_str(), &stats) != 0)
-            return (false);
+            return false;
         if (isDirectory != NULL)
             *isDirectory = S_ISDIR(stats.st_mode);
-        return (true);
+        return true;
     }
 
     std::string joinPaths(const std::string& left, const std::string& right)
     {
         if (left.empty())
-            return (right);
+            return right;
         if (right.empty())
-            return (left);
+            return left;
         if (left[left.length() - 1] == '/' && right[0] == '/')
             return (left + right.substr(1));
         if (left[left.length() - 1] != '/' && right[0] != '/')
@@ -63,50 +63,50 @@ namespace
                 default: escaped += value[i]; break;
             }
         }
-        return (escaped);
+        return escaped;
     }
 
     std::string readFileToString(const std::string& filePath)
     {
         std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
         if (!file.is_open())
-            return ("");
+            return "";
 
         std::stringstream buffer;
         buffer << file.rdbuf();
-        return (buffer.str());
+        return buffer.str();
     }
 
     std::string getContentType(const std::string& path)
     {
         if (hasSuffix(path, ".html") || hasSuffix(path, ".htm"))
-            return ("text/html");
+            return "text/html";
         if (hasSuffix(path, ".css"))
-            return ("text/css");
+            return "text/css";
         if (hasSuffix(path, ".js"))
-            return ("application/javascript");
+            return "application/javascript";
         if (hasSuffix(path, ".json"))
-            return ("application/json");
+            return "application/json";
         if (hasSuffix(path, ".xml"))
-            return ("application/xml");
+            return "application/xml";
         if (hasSuffix(path, ".png"))
-            return ("image/png");
+            return "image/png";
         if (hasSuffix(path, ".jpg") || hasSuffix(path, ".jpeg"))
-            return ("image/jpeg");
+            return "image/jpeg";
         if (hasSuffix(path, ".gif"))
-            return ("image/gif");
+            return "image/gif";
         if (hasSuffix(path, ".svg"))
-            return ("image/svg+xml");
+            return "image/svg+xml";
         if (hasSuffix(path, ".py"))
-            return ("text/x-python");
-        return ("text/plain");
+            return "text/x-python";
+        return "text/plain";
     }
 
     std::string buildDirectoryListing(const std::string& directoryPath, const std::string& requestPath)
     {
         DIR* dirStream = opendir(directoryPath.c_str());
         if (dirStream == NULL)
-            return ("");
+            return "";
 
         std::stringstream html;
         html << "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Index of "
@@ -129,7 +129,7 @@ namespace
         closedir(dirStream);
 
         html << "</ul></body></html>";
-        return (html.str());
+        return html.str();
     }
 
     bool matchesCgiExtension(const std::string& requestPath, const std::string& extension)
@@ -140,11 +140,11 @@ namespace
         {
             size_t extensionPos = requestPath.find(extension, searchPos);
             if (extensionPos == std::string::npos)
-                return (false);
+                return false;
 
             size_t extensionEndPos = extensionPos + extension.length();
             if (extensionEndPos == requestPath.length() || requestPath[extensionEndPos] == '/')
-                return (true);
+                return true;
 
             searchPos = extensionPos + 1;
         }
@@ -158,7 +158,7 @@ namespace server_utils
     bool matchExtension(const std::string& filename, const std::string& extension)
     {
         if (filename.length() < extension.length())
-            return (false);
+            return false;
 
         std::string endOfString = filename.substr(filename.length() - extension.length());
         return (endOfString == extension);
@@ -173,12 +173,12 @@ namespace server_utils
 
         size_t colonPos = lower.find("connection:");
         if (colonPos == std::string::npos)
-            return (false);
+            return false;
 
         colonPos += 11;
         colonPos = lower.find_first_not_of(" \t", colonPos);
         if (colonPos == std::string::npos)
-            return (false);
+            return false;
 
         size_t endPos = lower.find("\r\n", colonPos);
         if (endPos == std::string::npos)
@@ -187,7 +187,7 @@ namespace server_utils
         std::string value = lower.substr(colonPos, endPos - colonPos);
         size_t lastNonSpace = value.find_last_not_of(" \t");
         if (lastNonSpace == std::string::npos)
-            return (false);
+            return false;
         value.erase(lastNonSpace + 1);
 
         return (value == "keep-alive");
@@ -229,7 +229,7 @@ namespace server_utils
 
         if (bestLocation == NULL && !locations.empty())
             bestLocation = &locations.front();
-        return (bestLocation);
+        return bestLocation;
     }
 
     bool requestMethodAllowed(const Location& location, const std::string& method)
@@ -241,9 +241,9 @@ namespace server_utils
         for (std::vector<std::string>::const_iterator it = allowedMethods.begin(); it != allowedMethods.end(); ++it)
         {
             if (*it == method)
-                return (true);
+                return true;
         }
-        return (false);
+        return false;
     }
 
     std::vector<std::string> defaultAllowedMethods()
@@ -252,7 +252,7 @@ namespace server_utils
         methods.push_back("GET");
         methods.push_back("POST");
         methods.push_back("DELETE");
-        return (methods);
+        return methods;
     }
 
     std::string buildUrlPathFromLocation(const Location& location, const Request& request)
@@ -261,7 +261,7 @@ namespace server_utils
         std::string requestPath = request.getPath();
 
         if (requestPath + "/" == locationPath)
-            return ("/");
+            return "/";
 
         if (!locationPath.empty() && requestPath.compare(0, locationPath.length(), locationPath) == 0)
         {
@@ -270,7 +270,7 @@ namespace server_utils
 
         if (requestPath.empty())
             requestPath = "/";
-        return (requestPath);
+        return requestPath;
     }
 
     std::string resolveFilesystemPath(const Location& location, const Request& request)
@@ -278,7 +278,7 @@ namespace server_utils
         std::string resolved = joinPaths(location.getRoot(), buildUrlPathFromLocation(location, request));
         if (resolved.length() > 1 && resolved[resolved.length() - 1] == '/')
             resolved.erase(resolved.length() - 1);
-        return (resolved);
+        return resolved;
     }
 
     Response applyConnectionPolicy(Response response, const ClientConnection* client)
@@ -287,7 +287,7 @@ namespace server_utils
             response.setConnectionKeepAlive(client->getVhost()->getTimeout());
         else
             response.setConnectionClose();
-        return (response);
+        return response;
     }
 
     Response buildRedirectResponse(const Location& location, const ClientConnection* client)
@@ -296,7 +296,7 @@ namespace server_utils
         response.setHeader("Location", location.getReturn().second);
         response.setHeader("Content-Type", "text/plain");
         response.setBody("Redirecting");
-        return (applyConnectionPolicy(response, client));
+        return applyConnectionPolicy(response, client);
     }
 
     Response buildMethodNotAllowedResponse(const Location& location, const Vhost& vhost, const ClientConnection* client)
@@ -306,7 +306,7 @@ namespace server_utils
             response.setAllowedMethods(location.getMethods());
         else
             response.setAllowedMethods(defaultAllowedMethods());
-        return (applyConnectionPolicy(response, client));
+        return applyConnectionPolicy(response, client);
     }
 
     bool isCgiRequest(const Vhost& vhost, const Request& request)
@@ -316,22 +316,22 @@ namespace server_utils
         for (std::map<std::string, std::string>::const_iterator it = cgi.begin(); it != cgi.end(); ++it)
         {
             if (matchesCgiExtension(request.getPath(), it->first))
-                return (true);
+                return true;
         }
-        return (false);
+        return false;
     }
 
     Response buildGetResponse(const Vhost& vhost, const Location& location, const Request& request, ClientConnection* client)
     {
         // Redirects are handled before touching the filesystem.
         if (location.isReturnSet())
-            return (buildRedirectResponse(location, client));
+            return buildRedirectResponse(location, client);
 
         // Resolve the requested path inside the location root.
         std::string filesystemPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
         if (!pathExists(filesystemPath, &isDirectory))
-            return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
+            return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
 
         // If the target is a directory, try default files first.
         if (isDirectory)
@@ -360,16 +360,16 @@ namespace server_utils
                     // Build a simple HTML index for the directory.
                     std::string listing = buildDirectoryListing(filesystemPath, request.getPath());
                     if (listing.empty())
-                        return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+                        return applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
 
                     Response response(200);
                     response.setHeader("Content-Type", "text/html");
                     response.setBody(listing);
-                    return (applyConnectionPolicy(response, client));
+                    return applyConnectionPolicy(response, client);
                 }
                 if (location.isDefaultsSet())
-                    return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
-                return (applyConnectionPolicy(Response::createErrorResponse(403, vhost), client));
+                    return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
+                return applyConnectionPolicy(Response::createErrorResponse(403, vhost), client);
             }
         }
 
@@ -395,32 +395,32 @@ namespace server_utils
 
                 Response streamed(200);
                 streamed.setStreamed();
-                return (streamed);
+                return streamed;
             }
         }
 
         std::string body = readFileToString(filesystemPath);
         if (body.empty() && !pathExists(filesystemPath, NULL))
-            return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
+            return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
 
         Response response(200);
         response.setHeader("Content-Type", getContentType(filesystemPath));
         response.setBody(body);
-        return (applyConnectionPolicy(response, client));
+        return applyConnectionPolicy(response, client);
     }
 
     Response buildPostResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
     {
         // Redirects win before any body handling.
         if (location.isReturnSet())
-            return (buildRedirectResponse(location, client));
+            return buildRedirectResponse(location, client);
 
         // If an upload folder exists, store the body there as a new file.
         if (location.isUploadStoreSet())
         {
             bool isDirectory = false;
             if (!pathExists(location.getUploadStore(), &isDirectory) || !isDirectory)
-                return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+                return applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
 
             std::stringstream nameStream;
             nameStream << "upload_" << static_cast<long>(std::time(NULL)) << ".txt";
@@ -428,48 +428,48 @@ namespace server_utils
 
             std::ofstream uploadFile(uploadPath.c_str(), std::ios::out | std::ios::binary);
             if (!uploadFile.is_open())
-                return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+                return applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
 
             uploadFile << request.getBody();
             if (!uploadFile.good())
-                return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+                return applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
 
             Response response(201);
             response.setHeader("Content-Type", "text/plain");
             response.setBody("Created");
-            return (applyConnectionPolicy(response, client));
+            return applyConnectionPolicy(response, client);
         }
 
         // Otherwise, just echo the body back as a basic POST response.
         Response response(200);
         response.setHeader("Content-Type", "text/plain");
         response.setBody(request.getBody());
-        return (applyConnectionPolicy(response, client));
+        return applyConnectionPolicy(response, client);
     }
 
     Response buildDeleteResponse(const Vhost& vhost, const Location& location, const Request& request, const ClientConnection* client)
     {
         // Redirects are handled first, just like in GET and POST.
         if (location.isReturnSet())
-            return (buildRedirectResponse(location, client));
+            return buildRedirectResponse(location, client);
 
         // Resolve the requested file and make sure it exists.
         std::string filesystemPath = resolveFilesystemPath(location, request);
         bool isDirectory = false;
         if (!pathExists(filesystemPath, &isDirectory))
-            return (applyConnectionPolicy(Response::createErrorResponse(404, vhost), client));
+            return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
 
         // Only regular files can be deleted here.
         if (isDirectory)
-            return (applyConnectionPolicy(Response::createErrorResponse(403, vhost), client));
+            return applyConnectionPolicy(Response::createErrorResponse(403, vhost), client);
 
         // Remove the file from disk and report success.
         if (::remove(filesystemPath.c_str()) != 0)
-            return (applyConnectionPolicy(Response::createErrorResponse(500, vhost), client));
+            return applyConnectionPolicy(Response::createErrorResponse(500, vhost), client);
 
         Response response(200);
         response.setHeader("Content-Type", "text/plain");
         response.setBody("Deleted");
-        return (applyConnectionPolicy(response, client));
+        return applyConnectionPolicy(response, client);
     }
 }

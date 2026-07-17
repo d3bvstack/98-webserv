@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/19 14:11:51 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/06/28 19:11:04 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:11:11 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,32 +137,32 @@ bool Request::operator==(const Request& other) const
 
 const std::string& Request::getMethod() const
 {
-    return (_method);
+    return _method;
 }
 
 const std::string& Request::getPath() const
 {
-    return (_path);
+    return _path;
 }
 
 const std::string& Request::getVersion() const
 {
-    return (_version);
+    return _version;
 }
 
 const std::string& Request::getQueryString() const
 {
-    return (_query_string);
+    return _query_string;
 }
 
 const std::map<std::string, std::string>& Request::getHeaders() const
 {
-    return (_headers);
+    return _headers;
 }
 
 const std::string& Request::getBody() const
 {
-    return (_body);
+    return _body;
 }
 
 void Request::debugRequest() const

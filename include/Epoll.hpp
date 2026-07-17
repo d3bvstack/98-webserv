@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/15 23:10:01 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/13 22:03:40 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/17 14:08:15 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,5 +37,5 @@ class Epoll
         void modifyFd(int fd, uint32_t events, void* ctx);
         int waitWrapper();
 
-        epoll_event *getEvents()    { return (_events); }
+        epoll_event *getEvents()    { return _events; }
 };
