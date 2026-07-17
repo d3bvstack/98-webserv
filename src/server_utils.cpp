@@ -329,9 +329,13 @@ namespace server_utils
 
         // Resolve the requested path inside the location root.
         std::string filesystemPath = resolveFilesystemPath(location, request);
+        struct stat fileSt;
         bool isDirectory = false;
-        if (!pathExists(filesystemPath, &isDirectory))
+        if (stat(filesystemPath.c_str(), &fileSt) != 0)
             return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
+        isDirectory = S_ISDIR(fileSt.st_mode);
+        if (!isDirectory && !S_ISREG(fileSt.st_mode))
+            return applyConnectionPolicy(Response::createErrorResponse(403, vhost), client);
 
         // If the target is a directory, try default files first.
         if (isDirectory)
@@ -455,12 +459,12 @@ namespace server_utils
 
         // Resolve the requested file and make sure it exists.
         std::string filesystemPath = resolveFilesystemPath(location, request);
+        struct stat fileSt;
         bool isDirectory = false;
-        if (!pathExists(filesystemPath, &isDirectory))
+        if (stat(filesystemPath.c_str(), &fileSt) != 0)
             return applyConnectionPolicy(Response::createErrorResponse(404, vhost), client);
-
-        // Only regular files can be deleted here.
-        if (isDirectory)
+        isDirectory = S_ISDIR(fileSt.st_mode);
+        if (isDirectory || !S_ISREG(fileSt.st_mode))
             return applyConnectionPolicy(Response::createErrorResponse(403, vhost), client);
 
         // Remove the file from disk and report success.
