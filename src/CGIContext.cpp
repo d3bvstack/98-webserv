@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGIContext.cpp                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/17 12:18:34 by dbarba-v          #+#    #+#             */
+/*   Updated: 2026/07/17 12:19:20 by dbarba-v         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "CGIContext.hpp"
 #include "Epoll.hpp"
 #include "ClientConnection.hpp"
@@ -252,12 +264,6 @@ bool CGIContext::start(Epoll& epoll)
     }
 
     std::string interpreter = findCgiInterpreter(_vhost, _request);
-    if (interpreter.empty())
-    {
-        _state = ERROR_STATE;
-        _errorStatusCode = 500;
-        return (false);
-    }
 
     std::string scriptUrlPath;
     std::string pathInfo;
