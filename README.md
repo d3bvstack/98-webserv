@@ -51,7 +51,7 @@
   - [HTTP Headers, Methods, \& Status Reference](#http-headers-methods--status-reference)
   - [Web Server Guides (NGINX)](#web-server-guides-nginx)
   - [Caching, Authentication, \& Cookie Management](#caching-authentication--cookie-management)
-    - [CGI](#cgi)
+  - [CGI](#cgi)
 - [AI Usage](#ai-usage)
 
 ## Description
