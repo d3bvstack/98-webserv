@@ -37,4 +37,8 @@ class Epoll
         int waitWrapper();
 
         epoll_event *getEvents()    { return _events; }
+
+    private:
+        Epoll(const Epoll&);
+        Epoll& operator=(const Epoll&);
 };
