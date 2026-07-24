@@ -17,7 +17,7 @@
 #include <netinet/in.h>
 #include "Socket.hpp"
 
-const int LISTEN_BACKLOG = 265;
+const int LISTEN_BACKLOG = 4096;
 
 class ListeningSocket : public Socket
 {

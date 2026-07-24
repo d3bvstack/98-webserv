@@ -44,7 +44,7 @@ class Server
         Server& operator=(const Server&);
 
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
-        void acceptNewConnection(Socket* listenSocket);
+        bool acceptNewConnection(Socket* listenSocket);
         void disconnectClient(int clientFd);
         bool handleClientIncomingEvent(ClientConnection* client);
         void handleClientOutgoingEvent(ClientConnection* client);

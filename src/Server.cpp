@@ -292,16 +292,13 @@ void Server::disconnectClient(int clientFd)
  *
  * @param listenSocket
  */
-void Server::acceptNewConnection(Socket* listenSocket)
+bool Server::acceptNewConnection(Socket* listenSocket)
 {
     int listenFd = listenSocket->getSocketFd();
     // accept4 for setting non blocking
     int newSocketFd = accept4(listenFd, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if (newSocketFd == -1)
-    {
-        std::cerr << "[ERROR] Accept failed on fd " << listenFd << std::endl;
-        return;
-    }
+        return false;
 
     uint16_t port = 0;
     for (std::vector<ListeningSocket*>::const_iterator it = _listeningSockets.begin();
@@ -339,6 +336,7 @@ void Server::acceptNewConnection(Socket* listenSocket)
         std::cerr << "[ERROR] Failed to establish connection on fd " << newSocketFd
                   << ": " << e.what() << std::endl;
     }
+    return true;
 }
 
 
@@ -687,7 +685,7 @@ void Server::handleIncomingEvents(int activeEventsCount)
             }
             else if (typeid(*target) == typeid(ListeningSocket))
             {
-                acceptNewConnection(static_cast<ListeningSocket*>(target));
+                while (acceptNewConnection(static_cast<ListeningSocket*>(target))) {}
             }
             else if (typeid(*target) == typeid(ClientConnection))
             {
