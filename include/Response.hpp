@@ -35,7 +35,7 @@ class Response
         std::string methodsToString(const std::vector<std::string>& allowedMethods) const;
 
     public:
-        Response(int code);
+        explicit Response(int code);
         ~Response();
 
 

@@ -26,7 +26,7 @@ class Request
         std::string _body;
 
     public:
-        Request(const std::string&);
+        explicit Request(const std::string&);
         ~Request();
 
         bool operator==(const Request& other) const;

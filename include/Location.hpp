@@ -34,7 +34,7 @@ class Location
         std::vector<std::string> _methods;
 
     public:
-        Location(const Vhost& currentVhost);
+        explicit Location(const Vhost& currentVhost);
         ~Location();
 
         bool isAutoindexSet() const                                 { return _autoindex_set; }
