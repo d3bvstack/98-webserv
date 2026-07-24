@@ -39,7 +39,7 @@ if command -v timeout >/dev/null; then
     exit 1
   fi
 
-  if [ "$STATUS" -eq 0 ] || [ "$STATUS" -eq 124 ] || [ "$STATUS" -eq 130 ]; then
+  if [[ "$STATUS" -eq 0 ]] || [[ "$STATUS" -eq 124 ]] || [[ "$STATUS" -eq 130 ]]; then
     echo "ASAN smoke test finished."
     exit 0
   else

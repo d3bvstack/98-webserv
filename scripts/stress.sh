@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # stress.sh - Procedural HTTP stress tester matching C structures
 #
@@ -39,11 +39,11 @@ send_raw_request() {
     response=$({
         printf '%s %s HTTP/1.1\r\n' "$method" "$path"
         printf 'Host: %s\r\n' "$HOST"
-        if [ "$body_len" -gt 0 ]; then
+        if [[ "$body_len" -gt 0 ]]; then
             printf 'Content-Length: %d\r\n' "$body_len"
         fi
         printf 'Connection: close\r\n\r\n'
-        if [ "$body_len" -gt 0 ]; then
+        if [[ "$body_len" -gt 0 ]]; then
             printf '%s' "$body"
         fi
     } | nc -w "$SOCKET_TIMEOUT" "$HOST" "$PORT" 2>/dev/null | head -n 1)
@@ -51,7 +51,7 @@ send_raw_request() {
     # Extract 3 consecutive digits (HTTP status code)
     status=$(echo "$response" | grep -oE '[0-9]{3}' | head -n 1)
 
-    if [ -z "$status" ]; then
+    if [[ -z "$status" ]]; then
         echo "ERR"  # Socket read timeout or connection refused
     else
         echo "$status"
@@ -64,9 +64,9 @@ dispatch_request() {
     index="$1"
     modulo=$((index % 3))
 
-    if [ "$modulo" -eq 0 ]; then
+    if [[ "$modulo" -eq 0 ]]; then
         send_raw_request "GET" "$GET_PATH" ""
-    elif [ "$modulo" -eq 1 ]; then
+    elif [[ "$modulo" -eq 1 ]]; then
         send_raw_request "POST" "$POST_PATH" "$POST_BODY"
     else
         send_raw_request "GET" "$CGI_PATH" ""
@@ -78,7 +78,7 @@ run_worker() {
     requests_to_send="$1"
     i=0
     
-    while [ "$i" -lt "$requests_to_send" ]; do
+    while [[ "$i" -lt "$requests_to_send" ]]; do
         # Appends output to the shared file descriptor.
         # UNIX guarantees atomic appends for small payloads (under 4KB).
         dispatch_request "$i" >> "$RESULTS_FILE"
@@ -88,7 +88,7 @@ run_worker() {
 
 # Equivalent to: void cleanup()
 cleanup() {
-    if [ -f "$RESULTS_FILE" ]; then
+    if [[ -f "$RESULTS_FILE" ]]; then
         rm -f "$RESULTS_FILE"
     fi
 }
@@ -113,9 +113,9 @@ main() {
 
     # Fork worker processes (equivalent to a loop of fork() / pthread_create())
     w=0
-    while [ "$w" -lt "$CONCURRENCY" ]; do
+    while [[ "$w" -lt "$CONCURRENCY" ]]; do
         n="$req_per_worker"
-        if [ "$w" -lt "$remainder" ]; then
+        if [[ "$w" -lt "$remainder" ]]; then
             n=$((n + 1))
         fi
         
@@ -129,7 +129,7 @@ main() {
 
     end_time="$(date +%s)"
     elapsed=$((end_time - start_time))
-    if [ "$elapsed" -eq 0 ]; then
+    if [[ "$elapsed" -eq 0 ]]; then
         elapsed=1
     fi
 
