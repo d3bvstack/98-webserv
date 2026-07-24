@@ -40,6 +40,9 @@ class Server
         std::vector<CGIContext*>         _cgiContexts;
         std::vector<EventTarget*>        _pendingDeletion;
 
+        Server(const Server&);
+        Server& operator=(const Server&);
+
         bool isPortAlreadyBound(const std::string& host, uint16_t port) const;
         void acceptNewConnection(Socket* listenSocket);
         void disconnectClient(int clientFd);
