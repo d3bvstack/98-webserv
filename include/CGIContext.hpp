@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <sys/types.h>
 #include <ctime>
 #include "EventTarget.hpp"
@@ -65,6 +66,9 @@ class CGIContext : public EventTarget
         int _errorStatusCode;
         time_t _startTime;
 
+        bool setError(int statusCode);
+        void runChildProcess(const std::string& scriptPath, const std::string& scriptUrlPath, const std::string& interpreter);
+        std::vector<std::string> buildEnvironment(const std::string& scriptPath, const std::string& scriptUrlPath);
         void closePipeEnd(Epoll& epoll, int fd);
         void cleanup(Epoll& epoll);
         void buildResponse();

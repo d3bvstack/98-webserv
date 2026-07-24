@@ -6,7 +6,7 @@
 /*   By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/17 12:18:34 by dbarba-v          #+#    #+#             */
-/*   Updated: 2026/07/17 14:29:24 by dbarba-v         ###   ########.fr       */
+/*   Updated: 2026/07/24 20:24:33 by dbarba-v         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -254,45 +254,118 @@ CGIContext::~CGIContext()
     if (_outputPipe[1] != -1) close(_outputPipe[1]);
 }
 
+bool CGIContext::setError(int statusCode)
+{
+    _state = ERROR_STATE;
+    _errorStatusCode = statusCode;
+    return false;
+}
+
+std::vector<std::string> CGIContext::buildEnvironment(const std::string& scriptPath, const std::string& scriptUrlPath)
+{
+    std::vector<std::string> env;
+
+    env.push_back("GATEWAY_INTERFACE=CGI/1.1");
+    env.push_back("REQUEST_METHOD=" + _request.getMethod());
+    env.push_back("QUERY_STRING=" + _request.getQueryString());
+    env.push_back("SCRIPT_FILENAME=" + scriptPath);
+    env.push_back("SCRIPT_NAME=" + scriptUrlPath);
+    env.push_back("PATH_INFO=" + _request.getPath());
+    env.push_back("REQUEST_URI=" + _request.getPath());
+    env.push_back("SERVER_PROTOCOL=" + _request.getVersion());
+    env.push_back("SERVER_SOFTWARE=98Webserv");
+    env.push_back("SERVER_NAME=" + _vhost.getHost());
+
+    std::stringstream portStream;
+    portStream << _vhost.getPort();
+    env.push_back("SERVER_PORT=" + portStream.str());
+
+    env.push_back("REDIRECT_STATUS=200");
+
+    if (_request.getMethod() == "POST")
+    {
+        std::stringstream lengthStream;
+        lengthStream << _request.getBody().length();
+        env.push_back("CONTENT_LENGTH=" + lengthStream.str());
+
+        std::map<std::string, std::string>::const_iterator contentTypeIt =
+            _request.getHeaders().find("Content-Type");
+        if (contentTypeIt != _request.getHeaders().end())
+            env.push_back("CONTENT_TYPE=" + contentTypeIt->second);
+    }
+
+    const std::map<std::string, std::string>& headers = _request.getHeaders();
+    for (std::map<std::string, std::string>::const_iterator it = headers.begin();
+         it != headers.end(); ++it)
+    {
+        std::string key = it->first;
+        for (size_t i = 0; i < key.length(); ++i)
+        {
+            if (key[i] == '-')
+                key[i] = '_';
+            else
+                key[i] = std::toupper(static_cast<unsigned char>(key[i]));
+        }
+        env.push_back("HTTP_" + key + "=" + it->second);
+    }
+
+    return env;
+}
+
+void CGIContext::runChildProcess(const std::string& scriptPath, const std::string& scriptUrlPath, const std::string& interpreter)
+{
+    dup2(_inputPipe[0], STDIN_FILENO);
+    dup2(_outputPipe[1], STDOUT_FILENO);
+    dup2(_outputPipe[1], STDERR_FILENO);
+
+    close(_inputPipe[0]);
+    close(_inputPipe[1]);
+    close(_outputPipe[0]);
+    close(_outputPipe[1]);
+
+    std::vector<std::string> envStrings = buildEnvironment(scriptPath, scriptUrlPath);
+
+    std::vector<char*> envp;
+    for (size_t i = 0; i < envStrings.size(); ++i)
+        envp.push_back(const_cast<char*>(envStrings[i].c_str()));
+    envp.push_back(NULL);
+
+    std::vector<std::string> argStrings;
+    if (!interpreter.empty())
+        argStrings.push_back(interpreter);
+    argStrings.push_back(scriptPath);
+
+    std::vector<char*> argv;
+    for (size_t i = 0; i < argStrings.size(); ++i)
+        argv.push_back(const_cast<char*>(argStrings[i].c_str()));
+    argv.push_back(NULL);
+
+    const char* execPath = interpreter.empty() ? scriptPath.c_str(): interpreter.c_str();
+    execve(execPath, &argv[0], &envp[0]);
+    _exit(1);
+}
+
 bool CGIContext::start(Epoll& epoll)
 {
     if (_location.isReturnSet())
-    {
-        _state = ERROR_STATE;
-        _errorStatusCode = 500;
-        return false;
-    }
+        return setError(500);
 
     std::string interpreter = findCgiInterpreter(_vhost, _request);
 
     std::string scriptUrlPath;
     std::string pathInfo;
     if (!splitCgiPath(_vhost, _request, scriptUrlPath, pathInfo))
-    {
-        _state = ERROR_STATE;
-        _errorStatusCode = 500;
-        return false;
-    }
+        return setError(500);
 
     std::string scriptPath = resolveFilesystemPathFromUrlPath(_location, scriptUrlPath);
 
-    {
-        struct stat st;
-        if (stat(scriptPath.c_str(), &st) != 0 || S_ISDIR(st.st_mode))
-        {
-            _state = ERROR_STATE;
-            _errorStatusCode = 404;
-            return false;
-        }
-    }
+    struct stat st;
+    if (stat(scriptPath.c_str(), &st) != 0 || S_ISDIR(st.st_mode))
+        return setError(404);
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, _inputPipe) == -1
         || socketpair(AF_UNIX, SOCK_STREAM, 0, _outputPipe) == -1)
-    {
-        _state = ERROR_STATE;
-        _errorStatusCode = 500;
-        return false;
-    }
+        return setError(500);
 
     _pid = fork();
     if (_pid == -1)
@@ -301,98 +374,11 @@ bool CGIContext::start(Epoll& epoll)
         close(_inputPipe[1]);
         close(_outputPipe[0]);
         close(_outputPipe[1]);
-        _state = ERROR_STATE;
-        _errorStatusCode = 500;
-        return false;
+        return setError(500);
     }
 
     if (_pid == 0)
-    {
-        dup2(_inputPipe[0], STDIN_FILENO);
-        dup2(_outputPipe[1], STDOUT_FILENO);
-        dup2(_outputPipe[1], STDERR_FILENO);
-
-        close(_inputPipe[0]);
-        close(_inputPipe[1]);
-        close(_outputPipe[0]);
-        close(_outputPipe[1]);
-
-        std::vector<std::string> envStrings;
-        envStrings.push_back("GATEWAY_INTERFACE=CGI/1.1");
-        envStrings.push_back("REQUEST_METHOD=" + _request.getMethod());
-        envStrings.push_back("QUERY_STRING=" + _request.getQueryString());
-        envStrings.push_back("SCRIPT_FILENAME=" + scriptPath);
-        envStrings.push_back("SCRIPT_NAME=" + scriptUrlPath);
-        envStrings.push_back("PATH_INFO=" + _request.getPath());
-        envStrings.push_back("REQUEST_URI=" + _request.getPath());
-        envStrings.push_back("SERVER_PROTOCOL=" + _request.getVersion());
-        envStrings.push_back("SERVER_SOFTWARE=98Webserv");
-        envStrings.push_back("SERVER_NAME=" + _vhost.getHost());
-        {
-            std::stringstream portStream;
-            portStream << _vhost.getPort();
-            envStrings.push_back("SERVER_PORT=" + portStream.str());
-        }
-        envStrings.push_back("REDIRECT_STATUS=200");
-        if (_request.getMethod() == "POST")
-        {
-            std::stringstream lengthStream;
-            lengthStream << _request.getBody().length();
-            envStrings.push_back("CONTENT_LENGTH=" + lengthStream.str());
-
-            std::map<std::string, std::string>::const_iterator contentTypeIt =
-                _request.getHeaders().find("Content-Type");
-            if (contentTypeIt != _request.getHeaders().end())
-                envStrings.push_back("CONTENT_TYPE=" + contentTypeIt->second);
-        }
-
-        const std::map<std::string, std::string>& headers = _request.getHeaders();
-        for (std::map<std::string, std::string>::const_iterator it = headers.begin();
-             it != headers.end(); ++it)
-        {
-            std::string key = it->first;
-            for (size_t i = 0; i < key.length(); ++i)
-            {
-                if (key[i] == '-')
-                    key[i] = '_';
-                else
-                    key[i] = std::toupper(static_cast<unsigned char>(key[i]));
-            }
-            envStrings.push_back("HTTP_" + key + "=" + it->second);
-        }
-
-        std::vector<char*> envp;
-        for (size_t i = 0; i < envStrings.size(); ++i)
-            envp.push_back(const_cast<char*>(envStrings[i].c_str()));
-        envp.push_back(NULL);
-
-        if (interpreter.empty())
-        {
-            std::vector<std::string> argStrings;
-            argStrings.push_back(scriptPath);
-
-            std::vector<char*> argv;
-            for (size_t i = 0; i < argStrings.size(); ++i)
-                argv.push_back(const_cast<char*>(argStrings[i].c_str()));
-            argv.push_back(NULL);
-
-            execve(scriptPath.c_str(), &argv[0], &envp[0]);
-        }
-        else
-        {
-            std::vector<std::string> argStrings;
-            argStrings.push_back(interpreter);
-            argStrings.push_back(scriptPath);
-
-            std::vector<char*> argv;
-            for (size_t i = 0; i < argStrings.size(); ++i)
-                argv.push_back(const_cast<char*>(argStrings[i].c_str()));
-            argv.push_back(NULL);
-
-            execve(interpreter.c_str(), &argv[0], &envp[0]);
-        }
-        _exit(1);
-    }
+        runChildProcess(scriptPath, scriptUrlPath, interpreter);
 
     close(_inputPipe[0]);
     _inputPipe[0] = -1;
